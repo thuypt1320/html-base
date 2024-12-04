@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Screen Capture API</title>
+	<style>
+		video {
+			border: 1px solid;
+			margin: 20px;
+			max-width: 500px;
+			max-height: 500px;
+			object-fit: contain;
+		}
+	</style>
+</head>
+<body>
+<div>
+	<video autoplay id="stream"></video>
+</div>
+<button id="start">Start</button>
+<button id="stop">Stop</button>
+<div>
+	<p>Preview: </p>
+	<div>
+		<video id="preview" controls autoplay controlslist="nodownload"></video>
+	</div>
+	<a href="" download>Download</a>
+</div>
+</body>
+<script>
+	const start = document.getElementById('start');
+	const stop = document.getElementById('stop');
+	const videoStream = document.getElementById('stream');
+	const videoPreview = document.getElementById('preview');
+	const download = document.querySelector('a[download]');
+
+	videoPreview.oncontextmenu = e => e.preventDefault();
+
+	start.addEventListener('click', async () => {
+		const stream = await navigator.mediaDevices.getDisplayMedia();
+		videoStream.srcObject = stream;
+		const data = [];
+
+		const recorder = new MediaRecorder(stream);
+		recorder.start(1000);
+		recorder.addEventListener('dataavailable', e => data.push(e.data));
+
+		recorder.addEventListener('stop', () => {
+			const blob = new Blob(data, { type: 'video/mp4' });
+			const url = URL.createObjectURL(blob);
+			videoPreview.src = url;
+			download.href = url;
+		});
+	});
+
+	stop.addEventListener('click', async () => {
+		const tracks = videoStream.srcObject?.getTracks();
+		tracks.forEach(track => track.stop());
+	});
+
+</script>
+</html>
