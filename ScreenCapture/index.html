@@ -25,7 +25,7 @@
 <div>
 	<p>Preview: </p>
 	<div>
-		<video id="preview" controls autoplay controlslist="nodownload"></video>
+		<video id="preview" controls autoplay></video>
 	</div>
 	<a href="" download>Download</a>
 </div>
@@ -44,8 +44,8 @@
 		videoStream.srcObject = stream;
 		const data = [];
 
-		const recorder = new MediaRecorder(stream);
-		recorder.start(1000);
+		const recorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
+		recorder.start(250);
 		recorder.addEventListener('dataavailable', e => data.push(e.data));
 
 		recorder.addEventListener('stop', () => {
