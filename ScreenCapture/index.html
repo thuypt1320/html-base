@@ -18,17 +18,14 @@
 </head>
 <body>
 <div>
-	<video autoplay id="stream"></video>
+	<video autoplay id="stream">
+	</video>
+	<video id="preview" controls autoplay hidden></video>
 </div>
 <button id="start">Start</button>
 <button id="stop">Stop</button>
-<div>
-	<p>Preview: </p>
-	<div>
-		<video id="preview" controls autoplay></video>
-	</div>
-	<a href="" download>Download</a>
-</div>
+<br/>
+<a href="" download="video">Download</a>
 </body>
 <script>
 	const start = document.getElementById('start');
@@ -37,23 +34,31 @@
 	const videoPreview = document.getElementById('preview');
 	const download = document.querySelector('a[download]');
 
-	videoPreview.oncontextmenu = e => e.preventDefault();
-
 	start.addEventListener('click', async () => {
-		const stream = await navigator.mediaDevices.getDisplayMedia();
-		videoStream.srcObject = stream;
-		const data = [];
-
-		const recorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
-		recorder.start(250);
-		recorder.addEventListener('dataavailable', e => data.push(e.data));
-
-		recorder.addEventListener('stop', () => {
-			const blob = new Blob(data, { type: 'video/mp4' });
-			const url = URL.createObjectURL(blob);
-			videoPreview.src = url;
-			download.href = url;
+		const stream = await navigator.mediaDevices.getDisplayMedia({
+			audio: true,
+			video: {
+				displaySurface: 'browser', // displaySurface options: 'browser' | 'window' | 'monitor'→ Default content option
+			}
 		});
+		videoStream.srcObject = stream;
+		const mimeType = 'video/mp4;codecs=avc1';
+
+		const recorder = new MediaRecorder(stream, { mimeType });
+		recorder.start(1);
+		recorder.onstart = () => {
+			videoStream.hidden = false;
+			videoPreview.hidden = true;
+			const data = [];
+			recorder.ondataavailable = e => data.push(e.data);
+			recorder.onstop = () => {
+				videoStream.hidden = true;
+				videoPreview.hidden = false;
+				const url = URL.createObjectURL(new Blob(data, { type: mimeType }));
+				videoPreview.src = url;
+				download.href = url;
+			};
+		};
 	});
 
 	stop.addEventListener('click', async () => {
