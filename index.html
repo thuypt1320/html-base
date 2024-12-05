@@ -1,18 +1,169 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="icon" href="cat.svg"/>
-  <title>CAT</title>
+	<meta charset="UTF-8"/>
+	<meta
+		name="viewport"
+		content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+	/>
+	<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+	<link rel="manifest" href="manifest.json"/>
+	<link rel="icon" href="cat.svg"/>
+	<title>CAT</title>
+
+	<style>
+		.wrap {
+			font-size: 20px;
+			font-family: Arial, serif;
+			padding-block: 20px;
+			border-bottom: 1px solid;
+		}
+
+		input {
+			width: 50px;
+			min-width: 50px;
+			font: inherit;
+		}
+
+		#result {
+			border: 1px solid;
+			padding-inline: 4px;
+		}
+
+		#result:empty {
+			visibility: hidden;
+			font: inherit;
+		}
+	</style>
 </head>
 <body>
-<nav>
-  <a href="./">Home</a>
-  <a href="./cat.html">Cat</a>
-</nav>
+<div class="wrap" hidden>
+	<input type="number" id="data[0]"/>
+	×
+	<input type="number" id="data[1]"/>
+	=&nbsp;
+	<span id="result"></span>
+</div>
+<div class="wrap" id="gallery"></div>
 </body>
+<!--  Variables -->
+<script>
+	const data0 = document.getElementById('data[0]');
+	const data1 = document.getElementById('data[1]');
+	const log = document.getElementById('result');
+	const worker = new Worker('webWorker.js');
+
+	//   Resize
+	const canvas = document.createElement('canvas');
+	const ctx = canvas.getContext('2d');
+</script>
+<!--  Resize log style -->
+<script>
+	const { padding } = window.getComputedStyle(data0);
+	log.style.padding = padding;
+</script>
+
+<!--  Worker calculator-->
+<script>
+	if (worker) {
+		[data0, data1].forEach((input) => {
+			input.addEventListener('input', () => {
+				worker.postMessage({
+					type: 'CALC',
+					params: [data0.value, data1.value]
+				});
+			});
+		});
+
+		worker.addEventListener('message', (e) => {
+			const {
+				type,
+				result
+			} = e.data;
+			if (type === 'CALC') log.innerText = `${result}`;
+		});
+	}
+</script>
+<!--  Auto resize-->
+<script>
+	const onInput = (input) => {
+		input.addEventListener('input', () => {
+			worker.postMessage({
+				type: 'AUTO-RESIZE',
+				params: { ...window.getComputedStyle(input) },
+			});
+		});
+
+		worker.addEventListener('message', (e) => {
+			const {
+				type,
+				result: {
+					ctx: canvasContext,
+					dw
+				},
+			} = e.data;
+			if (type !== 'AUTO-RESIZE') return;
+			for (let [key, value] of Object.entries(canvasContext)) ctx[key] = value;
+			input.style.width = ctx.measureText(input.value).width + dw + 'px';
+		});
+	};
+
+	[data0, data1].forEach(onInput);
+</script>
+
+<!-- Service worker-->
+<script>
+	const registerServiceWorker = async () => {
+		if (navigator.serviceWorker) await navigator.serviceWorker.register('sw.js');
+	};
+	registerServiceWorker();
+</script>
+
+<!-- Show list image -->
+<script>
+	const listURL = ['./assets/cat.svg', './assets/dog.svg', './assets/parakeet.svg', './assets/rabbit.svg'];
+
+	<!-- Service worker post  message -->
+	navigator.serviceWorker.ready.then((registration) => {
+		registration.active.postMessage(['RESOURCE', listURL]);
+	});
+
+	const gallery = document.getElementById('gallery');
+
+	const getBlobUrl = async (url) => {
+		return fetch(url)
+			.then((res) => res.blob())
+			.then((blob) => URL.createObjectURL(blob));
+	};
+
+	const addImages = async (urls) =>
+		Promise.all(
+			urls.map(async (url) => {
+				const blobUrl = await getBlobUrl(url);
+
+				const img = new Image();
+				img.src = blobUrl;
+
+				img.height = 200;
+				img.width = 100;
+
+				return img;
+			}),
+		);
+
+	addImages(listURL).then((list) => gallery.append(...list));
+</script>
+
+<!-- Service Worker Message -->
+<script>
+	const getMessageFromServiceWorker = () => {
+		if (navigator.serviceWorker) {
+			navigator.serviceWorker.addEventListener('message', (e) => {
+				console.log(...e.data);
+			});
+		}
+	};
+
+	getMessageFromServiceWorker();
+</script>
 </html>
