@@ -38,7 +38,9 @@
 		const stream = await navigator.mediaDevices.getDisplayMedia({
 			audio: true,
 			video: {
-				displaySurface: 'browser', // displaySurface options: 'browser' | 'window' | 'monitor'→ Default content option
+				displaySurface: 'monitor', // displaySurface options: 'browser' | 'window' | 'monitor'→ Default content option
+				width: window.screen.width / 2, // Video Size <width> - check `Dimension` property file info, e.g: Dimension 1920x1280
+				height: window.screen.height / 2 // Video Size <height>
 			}
 		});
 		videoStream.srcObject = stream;
