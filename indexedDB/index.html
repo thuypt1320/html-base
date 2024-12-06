@@ -13,6 +13,28 @@
 			margin-inline: auto;
 		}
 
+		legend:has(:nth-child(2)) {
+			display: inline-flex;
+			width: 100%;
+			justify-content: space-between;
+			position: relative;
+		}
+
+		legend > *:first-child {
+			padding: 0;
+			margin: 0;
+			display: inline-flex;
+			width: 100%;
+			align-items: center;
+		}
+
+		legend > *:first-child::after {
+			content: "";
+			display: inline-block;
+			border-bottom: 2px solid gray;
+			flex: 1
+		}
+
 		form {
 			display: flex;
 			flex-direction: column;
@@ -40,11 +62,81 @@
 			gap: 4px;
 			justify-content: space-around;
 		}
+
+		#settings {
+			background: unset;
+			border: none;
+			font-size: 30px;
+			color: gray;
+			border-radius: 50%;
+			aspect-ratio: 1;
+			padding: 8px;
+			line-height: 0;
+			cursor: pointer;
+		}
+
+		#settings:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		#settings:active {
+			background: rgba(128, 128, 128, 0.5);
+			color: white;
+		}
+
+		#settings-popover {
+			position: absolute;
+			background: #fff;
+			border: 1px solid;
+			border-radius: 4px;
+			right: 0;
+			top: 100%;
+			padding: 4px 0;
+			display: inline-flex;
+			flex-direction: column;
+			margin: 0;
+			color: gray
+		}
+
+		#settings-popover > li::marker {
+			content: "";
+		}
+
+		#settings-popover > li {
+			padding-block: 4px;
+			padding-inline: 10px;
+			cursor: pointer;
+			display: inline-flex;
+			gap: 10px;
+			justify-content: space-between;
+			font-family: Arial, serif;
+			font-size: 14px;
+		}
+
+		#settings-popover > li:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		#settings-popover > li:active {
+			background: rgba(128, 128, 128, 0.5);
+			color: #ffffff;
+		}
+
+		#content {
+			min-height: 100px;
+		}
 	</style>
 </head>
 <body>
 <fieldset>
-	<legend>Upload File</legend>
+	<legend>
+		<p>Upload File</p>
+		<button id="settings">⚙</button>
+		<ul id="settings-popover" style="visibility: hidden">
+			<li id="clear">Clear <span>×</span></li>
+			<li id="reload">Reload <span>↺</span></li>
+		</ul>
+	</legend>
 	<form>
 		<label for="attach-file"><span>&nbsp;</span><input type="file" id="attach-file" required/></label>
 		<input value="" name="file" hidden id="file"/>
@@ -69,80 +161,82 @@
 </fieldset>
 <fieldset id="preview">
 	<legend>Preview</legend>
-	<div id="content">
-		<template id="preview-template">
-			<div class="wrap">
-				<slot name="file" class="preview-file">File</slot>
-				<slot name="label" class="file-name">Label</slot>
-				<div id="popover">
-					<button id="open">Open New Tab</button>
-					<button id="delete">Delete</button>
-					<button id="edit">Edit</button>
-					<a id="download">Download</a>
-				</div>
+	<template id="preview-template">
+		<div class="wrap">
+			<slot name="file" class="preview-file">File</slot>
+			<slot name="label" class="file-name">Label</slot>
+			<div id="popover">
+				<button id="open">Open New Tab</button>
+				<button id="delete">Delete</button>
+				<button id="edit">Edit</button>
+				<a id="download">Download</a>
 			</div>
+		</div>
+		<style>
+			.wrap {
+				width: fit-content;
+				position: relative;
+				cursor: pointer;
+			}
 
-			<style>
-				.wrap {
-					width: fit-content;
-					position: relative;
-					cursor: pointer;
-				}
+			#popover {
+				position: absolute;
+				border: 1px solid;
+				background: #fff;
+				display: flex;
+				flex-direction: column;
+				min-width: 100px;
+				width: max-content;
+				border-radius: 2px;
+				z-index: 1;
+			}
 
-				#popover {
-					position: absolute;
-					border: 1px solid;
-					background: #fff;
-					display: flex;
-					flex-direction: column;
-					min-width: 100px;
-					width: max-content;
-					border-radius: 2px;
-					z-index: 1;
-				}
+			button {
+				background: unset;
+				margin: 0;
+				padding: 10px;
+				text-align: center;
+				border: none;
+				cursor: pointer;
+			}
 
-				button {
-					background: unset;
-					margin: 0;
-					padding: 10px;
-					text-align: center;
-					border: none;
-					cursor: pointer;
-				}
+			button:hover {
+				background: rgba(211, 211, 211, 0.38);
+			}
 
-				button:hover {
-					background: rgba(211, 211, 211, 0.38);
-				}
+			button:active {
+				background: lightgray;
+			}
 
-				button:active {
-					background: lightgray;
-				}
+			.preview-file {
+				border: 1px solid;
+				min-width: 50px;
+				height: fit-content;
+				display: flex;
+				border-radius: 4px;
+				justify-content: center;
+				align-items: center;
+			}
 
-				.preview-file {
-					border: 1px solid;
-					min-width: 50px;
-					height: fit-content;
-					display: flex;
-					border-radius: 4px;
-					justify-content: center;
-					align-items: center;
-				}
+			::slotted(:not(video)) {
+				pointer-events: none;
+			}
 
-				::slotted(:not(video)) {
-					pointer-events: none;
-				}
+			::slotted(p) {
+				padding: 0;
+				margin: 0;
+			}
 
-				::slotted(p) {
-					padding: 0;
-					margin: 0;
-				}
-
-				.file-name {
-					font-weight: 700;
-					font-size: 14px;
-					text-align: center;
-				}
-			</style>
+			.file-name {
+				font-weight: 700;
+				font-size: 14px;
+				text-align: center;
+			}
+		</style>
+	</template>
+	<div id="content">
+		<template shadowrootmode="open">
+			<slot name="content">Loading...</slot>
 		</template>
 	</div>
 </fieldset>
@@ -336,6 +430,12 @@
 		store.delete(Number(key));
 		broadcast.postMessage('DELETE');
 	};
+
+	const clearDB = async () => {
+		const store = await getStore();
+		store.clear();
+		broadcast.postMessage('CLEAR');
+	};
 </script>
 
 <!-- Display Preview -->
@@ -376,19 +476,37 @@
 
 			if (isVideo) {
 				video.slot = 'file';
-			} else object.slot = 'file';
+			} else {
+				object.slot = 'file';
+			}
 			customPreview.append(object, p, video);
 
+			customPreview.slot = 'content';
 			return customPreview;
 		}));
 		content.replaceChildren(...previews);
 	};
 
 	broadcast.addEventListener('message', async e => {
-		if (['ADD', 'DELETE'].includes(e.data)) await handleDisplayPreview();
+		await handleDisplayPreview();
 	});
-
 	handleDisplayPreview();
+</script>
+<!-- Settings -->
+<script>
+	const settings = document.getElementById('settings');
+	const settingsPopover = document.getElementById('settings-popover');
+	const clearBtn = document.getElementById('clear');
+	const reloadBtn = document.getElementById('reload');
+
+	clearBtn.onclick = () => clearDB();
+	reloadBtn.onclick = () => broadcast.postMessage('RELOAD');
+
+	settings.onclick = () => {
+		!settingsPopover.style.visibility ?
+			settingsPopover.style.setProperty('visibility', 'hidden')
+			: settingsPopover.style.removeProperty('visibility');
+	};
 </script>
 </body>
 </html>
