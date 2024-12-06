@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>IndexedDB API</title>
+
+	<style>
+		fieldset {
+			max-width: 500px;
+			margin-inline: auto;
+		}
+
+		form {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		form > label {
+			display: inline-flex;
+		}
+
+		label > *:first-child {
+			min-width: 50px;
+		}
+
+		#preview-attach-file, #preview-video {
+			display: inline-block;
+			width: 100px;
+			height: 100px;
+			border: 1px dashed;
+			border-radius: 4px;
+		}
+
+		#content {
+			display: flex;
+			gap: 4px;
+			justify-content: space-around;
+		}
+	</style>
+</head>
+<body>
+<fieldset>
+	<legend>Upload File</legend>
+	<form>
+		<label for="attach-file"><span>&nbsp;</span><input type="file" id="attach-file" required/></label>
+		<input value="" name="file" hidden id="file"/>
+		<label>
+			<span></span>
+			<div>
+				<template shadowrootmode="open">
+					<slot name="file"></slot>
+				</template>
+				<object id="preview-attach-file" slot="file"></object>
+				<video id="preview-video"></video>
+			</div>
+
+		</label>
+		<label for="title"><span>Title: </span><input id="title" name="title" required/></label>
+		<input type="submit" value="Submit"/>
+	</form>
+</fieldset>
+<fieldset>
+	<legend>Search</legend>
+	<input id="search"/>
+</fieldset>
+<fieldset id="preview">
+	<legend>Preview</legend>
+	<div id="content">
+		<template id="preview-template">
+			<div class="wrap">
+				<slot name="file" class="preview-file">File</slot>
+				<slot name="label" class="file-name">Label</slot>
+				<div id="popover">
+					<button id="open">Open New Tab</button>
+					<button id="delete">Delete</button>
+					<button id="edit">Edit</button>
+					<a id="download">Download</a>
+				</div>
+			</div>
+
+			<style>
+				.wrap {
+					width: fit-content;
+					position: relative;
+					cursor: pointer;
+				}
+
+				#popover {
+					position: absolute;
+					border: 1px solid;
+					background: #fff;
+					display: flex;
+					flex-direction: column;
+					min-width: 100px;
+					width: max-content;
+					border-radius: 2px;
+					z-index: 1;
+				}
+
+				button {
+					background: unset;
+					margin: 0;
+					padding: 10px;
+					text-align: center;
+					border: none;
+					cursor: pointer;
+				}
+
+				button:hover {
+					background: rgba(211, 211, 211, 0.38);
+				}
+
+				button:active {
+					background: lightgray;
+				}
+
+				.preview-file {
+					border: 1px solid;
+					min-width: 50px;
+					height: fit-content;
+					display: flex;
+					border-radius: 4px;
+					justify-content: center;
+					align-items: center;
+				}
+
+				::slotted(:not(video)) {
+					pointer-events: none;
+				}
+
+				::slotted(p) {
+					padding: 0;
+					margin: 0;
+				}
+
+				.file-name {
+					font-weight: 700;
+					font-size: 14px;
+					text-align: center;
+				}
+			</style>
+		</template>
+	</div>
+</fieldset>
+
+<!-- Elements -->
+<script>
+	const attachFile = document.getElementById('attach-file');
+	const fileUrl = document.getElementById('file');
+	const previewObject = document.getElementById('preview-attach-file');
+	const previewVideo = document.getElementById('preview-video');
+	const form = document.querySelector('form');
+	const template = document.getElementById('preview-template');
+	const content = document.getElementById('content');
+</script>
+
+<!-- Broadcast Channel API-->
+<script>
+	const broadcast = new BroadcastChannel('channel');
+</script>
+<!-- Custom Element - File Preview -->
+<script>
+	class CustomPreview extends HTMLElement {
+		constructor () {
+			super();
+			const shadow = this.attachShadow({ mode: 'open' });
+			shadow.appendChild(template.content.cloneNode(true));
+		}
+
+		static observedAttributes = ['value'];
+
+		set value (val) {
+			this.setAttribute('value', val);
+		}
+
+		get value () {
+			return this.getAttribute('value');
+		}
+
+		connectedCallback () {
+			const popover = this.shadowRoot.getElementById('popover');
+			const deleteBtn = this.shadowRoot.getElementById('delete');
+			const editBtn = this.shadowRoot.getElementById('edit');
+			const openBtn = this.shadowRoot.getElementById('open');
+			const downloadBtn = this.shadowRoot.getElementById('download');
+			popover.style.visibility = 'hidden';
+
+			this.shadowRoot.addEventListener('contextmenu', e => {
+				e.preventDefault();
+				const popover = this.shadowRoot.getElementById('popover');
+				popover.style.removeProperty('visibility');
+			}, { capture: true });
+
+			document.addEventListener('click', () => (popover.style.visibility = 'hidden'));
+			document.addEventListener('auxclick', (e) => {
+				if (!this.contains(e.target)) {
+					popover.style.visibility = 'hidden';
+				}
+
+			});
+
+			this.addEventListener('auxclick', e => {
+				popover.style.top = `${e.offsetY}px`;
+				popover.style.left = `${e.offsetX}px`;
+			});
+
+			deleteBtn.addEventListener('click', () => {
+				deleteData(this.value);
+				handleDisplayPreview();
+			});
+			editBtn.addEventListener('click', () => {
+			});
+
+			openBtn.addEventListener('click', async () => {
+				const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
+				window.open(url, '_blank');
+				URL.revokeObjectURL(url);
+			});
+			downloadBtn.addEventListener('click', async () => {
+				const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
+				downloadBtn.href = url;
+				URL.revokeObjectURL(url);
+			});
+		}
+	}
+
+	customElements.define('custom-preview', CustomPreview);
+</script>
+
+<!-- Submit Form-->
+<script>
+	attachFile.onchange = e => {
+		const [file] = e.target.files;
+		const isVideo = file.type.includes('video');
+
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+
+		reader.onload = evt => {
+			const url = evt.target.result;
+			fileUrl.value = url;
+
+			if (!isVideo) {
+				previewObject.data = url;
+				previewObject.slot = 'file';
+				previewVideo.slot = '';
+			} else {
+				previewVideo.src = URL.createObjectURL(file);
+				previewObject.slot = '';
+				previewVideo.slot = 'file';
+				previewVideo.controls = true;
+				previewVideo.autoplay = true;
+			}
+		};
+	};
+
+	form.onsubmit = e => {
+		e.preventDefault();
+		const formData = new FormData(e.target);
+		const values = Object.fromEntries(formData.entries());
+		addData(values);
+		handleDisplayPreview();
+		form.reset();
+		attachFile.focus();
+		previewObject.data = '';
+	};
+</script>
+
+<!-- IndexDB API -->
+<script>
+	const req = indexedDB.open('cat', 1);
+	const FACTORY_NAME = 'cat';
+	const STORE_NAME = 'cat';
+
+	req.onupgradeneeded = e => {
+		const store = e.currentTarget.result.createObjectStore(FACTORY_NAME, {
+			keyPath: 'id',
+			autoIncrement: true
+		});
+
+		store.createIndex('file', 'file', { unique: false });
+		store.createIndex('title', 'title', { unique: false });
+	};
+
+	const getStore = () => {
+		const req = indexedDB.open('cat', 1);
+
+		return new Promise(resolve => {
+			req.onsuccess = e => {
+				resolve(e.currentTarget.result.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME));
+			};
+		});
+
+	};
+
+	const addData = async (value) => {
+		const store = await getStore();
+		store.add(value);
+		broadcast.postMessage('ADD');
+	};
+
+	const getAll = async () => {
+		const store = await getStore();
+		const data = store.getAll();
+
+		return new Promise(resolve => {
+			data.onsuccess = e => {
+				resolve(e.target.result);
+			};
+		});
+	};
+
+	const getData = async (key, value) => {
+		const store = await getStore();
+		const req = store.index(key);
+		const record = req.get(value);
+		return new Promise((resolve, reject) => {
+			record.onsuccess = e => {
+				if (!e.target.result) {
+					reject('Not Found');
+					return;
+				}
+				resolve(e.target.result);
+			};
+
+			record.onerror = () => reject('Error IndexedDB');
+		});
+	};
+
+	const deleteData = async (key) => {
+		const store = await getStore();
+		store.delete(Number(key));
+		broadcast.postMessage('DELETE');
+	};
+</script>
+
+<!-- Display Preview -->
+<script>
+	const handleDisplayPreview = async () => {
+		const res = await getAll();
+		const data = await Promise.all(res.map(async ({
+			file,
+			...item
+		}) => {
+			const blob = await fetch(file).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
+			return {
+				...item,
+				file: blob,
+				isVideo: file.includes('video')
+			};
+		}));
+
+		const previews = await Promise.all(data.map(async ({
+			file,
+			title,
+			id,
+			isVideo
+		}) => {
+			const customPreview = document.createElement('custom-preview');
+			const object = document.createElement('object');
+			const video = document.createElement('video');
+			const p = document.createElement('p');
+			customPreview.value = id;
+			customPreview.url = file;
+			object.data = file;
+			video.height = 200;
+			video.src = file;
+			video.autoplay = true;
+			video.controls = true;
+			p.slot = 'label';
+			p.innerHTML = title;
+
+			if (isVideo) {
+				video.slot = 'file';
+			} else object.slot = 'file';
+			customPreview.append(object, p, video);
+
+			return customPreview;
+		}));
+		content.replaceChildren(...previews);
+	};
+
+	broadcast.addEventListener('message', async e => {
+		if (['ADD', 'DELETE'].includes(e.data)) await handleDisplayPreview();
+	});
+
+	handleDisplayPreview();
+</script>
+</body>
+</html>
