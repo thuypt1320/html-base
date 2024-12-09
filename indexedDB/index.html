@@ -60,7 +60,7 @@
 		#content {
 			display: flex;
 			gap: 4px;
-			justify-content: space-around;
+			flex-wrap: wrap;
 		}
 
 		#settings {
@@ -121,10 +121,6 @@
 			background: rgba(128, 128, 128, 0.5);
 			color: #ffffff;
 		}
-
-		#content {
-			min-height: 100px;
-		}
 	</style>
 </head>
 <body>
@@ -157,7 +153,7 @@
 </fieldset>
 <fieldset>
 	<legend>Search</legend>
-	<input id="search"/>
+	<input id="search" autocomplete="off"/>
 </fieldset>
 <fieldset id="preview">
 	<legend>Preview</legend>
@@ -250,6 +246,7 @@
 	const form = document.querySelector('form');
 	const template = document.getElementById('preview-template');
 	const content = document.getElementById('content');
+	const search = document.getElementById('search');
 </script>
 
 <!-- Broadcast Channel API-->
@@ -380,12 +377,12 @@
 		store.createIndex('title', 'title', { unique: false });
 	};
 
-	const getStore = () => {
+	const getStore = (mode = 'readwrite') => {
 		const req = indexedDB.open('cat', 1);
 
 		return new Promise(resolve => {
 			req.onsuccess = e => {
-				resolve(e.currentTarget.result.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME));
+				resolve(e.currentTarget.result.transaction(STORE_NAME, mode).objectStore(STORE_NAME));
 			};
 		});
 
@@ -398,12 +395,14 @@
 	};
 
 	const getAll = async () => {
-		const store = await getStore();
+		const store = await getStore('readonly');
 		const data = store.getAll();
 
 		return new Promise(resolve => {
 			data.onsuccess = e => {
-				resolve(e.target.result);
+				const result = e.target.result.filter(({ title }) => new RegExp(`${search.value.trim().toLowerCase()}.*`, 'g').test(title.toLowerCase()));
+				resolve(result);
+				broadcast.postMessage('GET ALL');
 			};
 		});
 	};
@@ -487,9 +486,7 @@
 		content.replaceChildren(...previews);
 	};
 
-	broadcast.addEventListener('message', async e => {
-		await handleDisplayPreview();
-	});
+	broadcast.addEventListener('message', () => handleDisplayPreview());
 	handleDisplayPreview();
 </script>
 <!-- Settings -->
@@ -507,6 +504,11 @@
 			settingsPopover.style.setProperty('visibility', 'hidden')
 			: settingsPopover.style.removeProperty('visibility');
 	};
+</script>
+
+<!-- Search -->
+<script>
+	search.onchange = () => handleDisplayPreview();
 </script>
 </body>
 </html>
