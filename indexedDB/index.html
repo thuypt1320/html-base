@@ -418,7 +418,6 @@
 			data.onsuccess = e => {
 				const result = e.target.result.filter(({ title }) => new RegExp(`${search.value.trim().toLowerCase()}.*`, 'g').test(title.toLowerCase()));
 				resolve(result);
-				broadcast.postMessage('GET ALL');
 			};
 		});
 	};
