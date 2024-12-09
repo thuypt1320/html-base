@@ -23,50 +23,10 @@ const showModal = (mode = 'success') => {
   }, 1500);
 };
 
-/**
- * IndexedDB - `screen-capture` database
- * */
-
-const req = indexedDB.open('screen-capture', 1);
-
-//  Create store
-req.onupgradeneeded = e => {
-  const db = e.currentTarget.result;
-  const store = db.createObjectStore('screen-capture', {
-    keyPath: 'id',
-    autoIncrement: true
-  });
-
-  store.createIndex('created_at', 'created_at', { unique: false });
-  store.createIndex('url', 'url', { unique: false });
-};
-
-// Get Store
-const getStore = (mode = 'readonly') => {
-  const request = indexedDB.open('screen-capture');
-
-  return new Promise(resolve => {
-    request.onsuccess = e => resolve(e.currentTarget.result.transaction('screen-capture', mode).objectStore('screen-capture'));
-  });
-
-};
-
-// Add
-const addData = async (val) => {
-  const store = await getStore('readwrite');
-  const addRequest = store.add(val);
-  addRequest.onsuccess = () => showModal();
-  addRequest.onerror = () => showModal('fail');
-};
-
-const getAll = async () => {
-  const store = await getStore();
-  const request = await store.getAll();
-  return new Promise(resolve => {
-    request.onsuccess = e => {
-      resolve(e.target.result);
-    };
-  });
+const postMessage = async (message) => {
+  if (!navigator.serviceWorker) return;
+  const registration = await navigator.serviceWorker.ready;
+  registration.active.postMessage(message);
 };
 
 start.addEventListener('click', async () => {
@@ -122,7 +82,7 @@ saveOffline.addEventListener('click', async () => {
     url,
     created_at: new Date()
   };
-  await addData(value);
+  await postMessage(['ADD_DATA', value]);
 });
 
 /**
@@ -148,9 +108,7 @@ class Capture extends HTMLElement {
 customElements.define('custom-capture', Capture);
 
 // Display Record
-const displayRecords = async () => {
-  const data = await getAll();
-
+const displayRecords = async (data) => {
   const list = (data.map(({
     url,
     created_at
@@ -165,4 +123,20 @@ const displayRecords = async () => {
   records.append(...list);
 };
 
-displayRecords().then();
+const handleServiceWorker = async () => {
+  if (!navigator.serviceWorker) return;
+
+  await navigator.serviceWorker.register('sw.js');
+
+  await navigator.serviceWorker.addEventListener('message', async e => {
+    const [type, data] = e.data;
+    if (type === 'GET_ALL') await displayRecords(data);
+    if (type === 'ADD_DATA') {
+      await displayRecords(data);
+      showModal();
+    }
+  });
+};
+
+handleServiceWorker().then();
+postMessage(['GET_ALL']).then();
