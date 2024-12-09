@@ -5,68 +5,167 @@
 	<meta name="viewport"
 	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="manifest" href="../manifest.json"/>
 	<title>Screen Capture API</title>
 	<style>
 		video {
 			border: 1px solid;
-			margin: 20px;
 			max-width: 500px;
 			max-height: 500px;
 			object-fit: contain;
 		}
+
+		fieldset {
+			max-width: 500px;
+			margin-inline: auto;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		fieldset > div {
+			display: flex;
+			flex: 1
+		}
+
+		video {
+			width: 100%;
+		}
+
+		button {
+			display: inline-flex;
+			justify-content: center;
+		}
+
+		button > a {
+			all: unset;
+			flex: 1
+		}
+
+		details {
+			position: fixed;
+			width: 100%;
+			top: 0;
+			left: 0
+		}
+
+		summary::marker {
+			content: '';
+		}
+
 	</style>
 </head>
 <body>
-<div>
-	<video autoplay id="stream">
-	</video>
-	<video id="preview" controls autoplay hidden></video>
-</div>
-<button id="start">Start</button>
-<button id="stop">Stop</button>
-<br/>
-<a href="" download="video">Download</a>
-</body>
-<script>
-	const start = document.getElementById('start');
-	const stop = document.getElementById('stop');
-	const videoStream = document.getElementById('stream');
-	const videoPreview = document.getElementById('preview');
-	const download = document.querySelector('a[download]');
+<details id="warning">
+	<summary></summary>
+	<div>
+		<template shadowrootmode="open">
+			<slot name="success"></slot>
+			<slot name="fail"></slot>
+			<style>
+				:host {
+					display: flex;
+					flex-direction: column;
+				}
 
-	start.addEventListener('click', async () => {
-		const stream = await navigator.mediaDevices.getDisplayMedia({
-			audio: true,
-			video: {
-				displaySurface: 'monitor', // displaySurface options: 'browser' | 'window' | 'monitor'→ Default content option
-				width: window.screen.width / 2, // Video Size <width> - check `Dimension` property file info, e.g: Dimension 1920x1280
-				height: window.screen.height / 2 // Video Size <height>
+				::slotted(*) {
+					flex: 1;
+					text-align: center;
+					position: relative;
+					margin: 0;
+					padding: 10px;
+				}
+
+				::slotted(*)::after, ::slotted(*)::before {
+					content: '';
+					position: absolute;
+					background: currentColor;
+					display: inline-flex;
+					width: 100%;
+					height: 100%;
+					opacity: 0.2;
+					top: 0;
+					left: 0;
+				}
+
+				::slotted(*)::before {
+					z-index: -1;
+					opacity: 1;
+					background: white;
+				}
+
+				::slotted([slot=success]) {
+					color: green;
+				}
+
+				::slotted([slot=fail]) {
+					color: red;
+				}
+			</style>
+		</template>
+		<p id="success" slot="success">SUCCESS</p>
+		<p id="fail">FAIL</p>
+	</div>
+</details>
+<nav>
+	<ul>
+		<li><a href="../">Home</a></li>
+		<li><a href="../indexedDB/index.html">indexedDB</a></li>
+	</ul>
+</nav>
+
+<fieldset>
+	<legend>Screen Capture</legend>
+	<div>
+		<template shadowrootmode="open">
+			<slot name="video"></slot>
+		</template>
+		<video autoplay id="stream" slot="video"></video>
+		<video id="preview" controls autoplay></video>
+	</div>
+</fieldset>
+
+<fieldset>
+	<legend>Control</legend>
+	<button id="start">Start</button>
+	<button id="stop">Stop</button>
+	<button id="offline">Save Offline</button>
+	<button><a download="Record">Download</a></button>
+</fieldset>
+
+<fieldset id="records">
+	<legend> Records</legend>
+	<div>
+		<template shadowrootmode="open">
+			<slot name="record"></slot>
+			<style>
+				:host {
+					display: flex;
+					width: 100%;
+				}
+
+				* {
+					flex: 1;
+				}
+			</style>
+		</template>
+	</div>
+	<template id="record">
+		<video controls></video>
+		<br/>
+		<slot></slot>
+		<style>
+			video {
+				width: 100%;
+				max-width: 100%
 			}
-		});
-		videoStream.srcObject = stream;
-		const mimeType = 'video/mp4;codecs=avc1';
 
-		const recorder = new MediaRecorder(stream, { mimeType });
-		recorder.start(1);
-		recorder.onstart = () => {
-			videoStream.hidden = false;
-			videoPreview.hidden = true;
-			const data = [];
-			recorder.ondataavailable = e => data.push(e.data);
-			recorder.onstop = () => {
-				videoStream.hidden = true;
-				videoPreview.hidden = false;
-				const url = URL.createObjectURL(new Blob(data, { type: mimeType }));
-				videoPreview.src = url;
-				download.href = url;
-			};
-		};
-	});
-
-	stop.addEventListener('click', async () => {
-		const tracks = videoStream.srcObject?.getTracks();
-		tracks.forEach(track => track.stop());
-	});
-
-</script>
+			::slotted(*) {
+				color: gray;
+			}
+		</style>
+	</template>
+</fieldset>
+</body>
+<script src="idb.js"></script>
 </html>
