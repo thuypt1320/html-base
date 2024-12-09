@@ -121,6 +121,10 @@
 			background: rgba(128, 128, 128, 0.5);
 			color: #ffffff;
 		}
+
+		dialog {
+			text-align: center;
+		}
 	</style>
 </head>
 <body>
@@ -165,7 +169,7 @@
 				<button id="open">Open New Tab</button>
 				<button id="delete">Delete</button>
 				<button id="edit">Edit</button>
-				<a id="download">Download</a>
+				<a href="#" id="download" download>Download</a>
 			</div>
 		</div>
 		<style>
@@ -185,6 +189,7 @@
 				width: max-content;
 				border-radius: 2px;
 				z-index: 1;
+				text-align: center;
 			}
 
 			button {
@@ -235,6 +240,11 @@
 			<slot name="content">Loading...</slot>
 		</template>
 	</div>
+	<dialog>
+		<p id="warning-clear">All Data Clear, Cannot Undo!!</p>
+		<button id="warning-confirm">OK</button>
+		<button id="warning-cancel">Cancel</button>
+	</dialog>
 </fieldset>
 
 <!-- Elements -->
@@ -247,6 +257,9 @@
 	const template = document.getElementById('preview-template');
 	const content = document.getElementById('content');
 	const search = document.getElementById('search');
+	const dialog = document.querySelector('dialog');
+	const dialogConfirm = dialog.querySelector('#warning-confirm');
+	const dialogCancel = dialog.querySelector('#warning-cancel');
 </script>
 
 <!-- Broadcast Channel API-->
@@ -278,11 +291,14 @@
 			const editBtn = this.shadowRoot.getElementById('edit');
 			const openBtn = this.shadowRoot.getElementById('open');
 			const downloadBtn = this.shadowRoot.getElementById('download');
+			downloadBtn.download = this.title;
 			popover.style.visibility = 'hidden';
 
 			this.shadowRoot.addEventListener('contextmenu', e => {
 				e.preventDefault();
 				const popover = this.shadowRoot.getElementById('popover');
+				popover.style.top = `${e.offsetY}px`;
+				popover.style.left = `${e.offsetX}px`;
 				popover.style.removeProperty('visibility');
 			}, { capture: true });
 
@@ -293,12 +309,6 @@
 				}
 
 			});
-
-			this.addEventListener('auxclick', e => {
-				popover.style.top = `${e.offsetY}px`;
-				popover.style.left = `${e.offsetX}px`;
-			});
-
 			deleteBtn.addEventListener('click', () => {
 				deleteData(this.value);
 				handleDisplayPreview();
@@ -311,11 +321,10 @@
 				window.open(url, '_blank');
 				URL.revokeObjectURL(url);
 			});
-			downloadBtn.addEventListener('click', async () => {
-				const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
-				downloadBtn.href = url;
-				URL.revokeObjectURL(url);
-			});
+			fetch(this.url)
+				.then(res => res.blob())
+				.then(blob => URL.createObjectURL(blob))
+				.then(url => downloadBtn.href = url);
 		}
 	}
 
@@ -465,6 +474,7 @@
 			const p = document.createElement('p');
 			customPreview.value = id;
 			customPreview.url = file;
+			customPreview.title = title;
 			object.data = file;
 			video.height = 200;
 			video.src = file;
@@ -496,7 +506,16 @@
 	const clearBtn = document.getElementById('clear');
 	const reloadBtn = document.getElementById('reload');
 
-	clearBtn.onclick = () => clearDB();
+	clearBtn.onclick = () => {
+		dialog.showModal();
+		dialogConfirm.onclick = () => {
+			clearDB();
+			handleDisplayPreview();
+			dialog.close();
+		};
+		dialogCancel.onclick = () => dialog.close();
+	};
+
 	reloadBtn.onclick = () => broadcast.postMessage('RELOAD');
 
 	settings.onclick = () => {
