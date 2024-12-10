@@ -42,17 +42,106 @@
 			flex: 1
 		}
 
-		details {
+		#warning {
 			position: fixed;
 			width: 100%;
 			top: 0;
 			left: 0
 		}
 
-		summary::marker {
+		#warning > summary::marker {
+			content: '';
+		}
+	</style>
+	<style>
+		.btn {
+			all: unset;
+			width: 30px;
+			aspect-ratio: 1;
+			text-align: center;
+			border-radius: 50%;
+			font-size: 24px;
+			color: gray;
+			cursor: pointer;
+		}
+
+		.btn:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		.btn:active {
+			background: rgba(128, 128, 128, 0.3);
+			color: #fff;
+		}
+
+		legend:has(*:nth-child(2)) {
+			display: inline-flex;
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.menu {
+			display: inline-flex;
+			position: relative;
+			align-items: center;
+		}
+
+		.menu-label {
+			margin: 0;
+			padding: 0;
+			align-items: center;
+			display: inline-flex;
+			width: 100%;
+		}
+
+		.menu-label::after {
+			content: '';
+			border-width: 1px;
+			border-style: groove;
+			border-color: rgb(136, 136, 136);
+			margin-right: -4px;
+			flex: 1;
+		}
+
+		.menu > summary::marker {
 			content: '';
 		}
 
+		.menu > ul {
+			position: absolute;
+			top: 100%;
+			right: 0;
+			margin: 0;
+			padding: 0;
+			background: #fff;
+			border-radius: 4px;
+			border: 1px solid;
+			z-index: 2;
+			display: inline-flex;
+			flex-direction: column;
+		}
+
+		.menu > ul > li::marker {
+			content: '';
+		}
+
+		.menu > ul > li {
+			padding-inline: 10px;
+			padding-block: 5px;
+			display: inline-flex;
+			justify-content: space-between;
+			flex: 1;
+			gap: 4px;
+		}
+
+		.menu > ul > li:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		.menu > ul > li:active {
+			background: rgba(128, 128, 128, 0.3);
+			color: #fff;
+		}
 	</style>
 </head>
 <body>
@@ -115,7 +204,10 @@
 </nav>
 
 <fieldset>
-	<legend>Screen Capture</legend>
+	<legend>
+		<p class="menu-label">Screen Capture</p>
+		<button id="reset" class="btn">↺</button>
+	</legend>
 	<div>
 		<template shadowrootmode="open">
 			<slot name="video"></slot>
@@ -134,7 +226,21 @@
 </fieldset>
 
 <fieldset id="records">
-	<legend> Records</legend>
+	<legend>
+		<p class="menu-label">Records</p>
+		<div>
+			<template shadowrootmode="open">
+				<slot name="settings"></slot>
+			</template>
+			<details class="menu" id="record-settings">
+				<summary class="btn">⚙</summary>
+				<ul>
+					<li id="delete">Delete<span>×</span></li>
+					<li id="download">Download<span>⤓</span></li>
+				</ul>
+			</details>
+		</div>
+	</legend>
 	<div>
 		<template shadowrootmode="open">
 			<slot name="record"></slot>
@@ -151,13 +257,54 @@
 		</template>
 	</div>
 	<template id="record">
-		<video controls></video>
-		<br/>
-		<slot></slot>
+		<label>
+			<input type="checkbox"/>
+			<video controls></video>
+			<br/>
+			<slot></slot>
+		</label>
+
 		<style>
+			:host {
+				padding: 4px;
+				margin-bottom: 10px;
+			}
+
+			label {
+				display: inline-block;
+				position: relative
+			}
+
+			label:hover {
+				box-shadow: 0 0 5px 0 gray;
+			}
+
+			input {
+				position: absolute;
+				top: 0;
+				left: 0;
+				transform: translate(-60%, -60%);
+				z-index: 2;
+				display: inline-flex;
+				width: 20px;
+				height: 20px;
+			}
+
+			input:not(:checked) {
+				visibility: hidden;
+			}
+
+			label:hover > input {
+				visibility: unset;
+			}
+
 			video {
 				width: 100%;
-				max-width: 100%
+				max-width: 100%;
+			}
+
+			label:has(input:checked) {
+				outline: 4px solid blue;
 			}
 
 			::slotted(*) {

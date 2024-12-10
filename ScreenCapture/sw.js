@@ -50,8 +50,19 @@ const getAll = async () => {
   request.onsuccess = e => postMessage(['GET_ALL', e.target.result]);
 };
 
+// Delete
+const deleteData = async (id) => {
+  const store = await getStore('readwrite');
+  const request = store.delete(id);
+
+  request.onsuccess = async () => postMessage(['DELETE_DATA', await getAll()]);
+  request.onerror = async () => postMessage(['DELETE_DATA', new Error('CANNOT DELETE')]);
+
+};
+
 self.addEventListener('message', async (e) => {
   const [type, data] = e.data;
   if (type === 'GET_ALL') await getAll();
   if (type === 'ADD_DATA') await addData(data);
+  if (type === 'DELETE_DATA') await deleteData(data);
 });

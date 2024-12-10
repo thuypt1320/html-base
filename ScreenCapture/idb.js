@@ -12,6 +12,9 @@ const details = document.querySelector('details#warning');
 const successMess = document.getElementById('success');
 const failMess = document.getElementById('fail');
 const records = document.getElementById('records');
+const recordSettings = document.getElementById('record-settings');
+const recordDelete = document.getElementById('delete');
+const recordDownload = document.getElementById('download');
 
 const showModal = (mode = 'success') => {
   details.open = true;
@@ -85,6 +88,13 @@ saveOffline.addEventListener('click', async () => {
   await postMessage(['ADD_DATA', value]);
 });
 
+// Handle close click outside
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (recordSettings?.open) recordSettings.open = false;
+});
+
 /**
  *  Custom Element - Record Items
  * */
@@ -95,13 +105,42 @@ class Capture extends HTMLElement {
     const template = document.getElementById('record');
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.appendChild(template.content.cloneNode(true));
+
+    const input = this.shadowRoot.querySelector('input');
+    input.addEventListener('input', e => this.dispatchEvent(new InputEvent('change', {
+      data: JSON.stringify({ [this.value]: this.checked })
+    })));
   }
 
-  static observedAttributes = ['src'];
+  static observedAttributes = ['value'];
 
   set src (val) {
     const video = this.shadowRoot.querySelector('video');
     video.src = val;
+  }
+
+  get src () {
+    const video = this.shadowRoot.querySelector('video');
+    return video.src;
+  }
+
+  set value (val) {
+    this.setAttribute('value', val);
+    const input = this.shadowRoot.querySelector('input');
+    input.value = val;
+  }
+
+  get value () {
+    return this.getAttribute('value');
+  }
+
+  get checked () {
+    const input = this.shadowRoot.querySelector('input');
+    return input.checked;
+  }
+
+  set checked (val) {
+    this.shadowRoot.querySelector('input').checked = val;
   }
 }
 
@@ -111,17 +150,50 @@ customElements.define('custom-capture', Capture);
 const displayRecords = async (data) => {
   const list = (data.map(({
     url,
+    id,
     created_at
   }) => {
     const recordEle = document.createElement('custom-capture');
     recordEle.src = url;
+    recordEle.value = id;
     recordEle.innerHTML = new Date(created_at).toLocaleString();
     recordEle.slot = 'record';
     return recordEle;
   }));
   records.querySelectorAll('[slot=record]').forEach(child => child.remove());
   records.append(...list);
+  const customCaptures = document.querySelectorAll('custom-capture');
+  customCaptures.forEach(child => {
+    //  Custom Capture `Change Event`
+    child.addEventListener('change', e => {
+      if (e.target.checked) recordSettings.slot = 'settings';
+
+      const noChecked = [...customCaptures].map(({ checked }) => checked).every(i => !i);
+      if (noChecked) recordSettings.removeAttribute('slot');
+    });
+  });
 };
+
+const getSelectedCaptures = () => {
+  const customCaptures = document.querySelectorAll('custom-capture');
+  return [...customCaptures].filter(({ checked }) => checked);
+};
+
+recordDelete.addEventListener('click', async () => await postMessage(['DELETE_ALL', getSelectedCaptures().map(({ value }) => value)]));
+recordDownload.addEventListener('click', e => {
+  getSelectedCaptures().forEach(async ({
+    src,
+    innerHTML: createdAt
+  }) => {
+    const a = document.createElement('a');
+    a.download = 'Record ' + createdAt.replace(',', ' at');
+    a.href = src;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+});
 
 const handleServiceWorker = async () => {
   if (!navigator.serviceWorker) return;
@@ -130,11 +202,9 @@ const handleServiceWorker = async () => {
 
   await navigator.serviceWorker.addEventListener('message', async e => {
     const [type, data] = e.data;
-    if (type === 'GET_ALL') await displayRecords(data);
-    if (type === 'ADD_DATA') {
-      await displayRecords(data);
-      showModal();
-    }
+    if (data) await displayRecords(data);
+    if (type === 'ADD_DATA') showModal();
+    if (type === 'DELETE_DATA') showModal();
   });
 };
 
