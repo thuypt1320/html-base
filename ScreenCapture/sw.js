@@ -12,19 +12,20 @@ const postMessage = async (message, clientId) => {
 /**
  * IndexedDB - `screen-capture` database
  * */
-
-const req = indexedDB.open('screen-capture', 1);
+const setup = () => {
+  const req = indexedDB.open('screen-capture', 1);
 
 //  Create store
-req.onupgradeneeded = e => {
-  const db = e.currentTarget.result;
-  const store = db.createObjectStore('screen-capture', {
-    keyPath: 'id',
-    autoIncrement: true
-  });
+  req.onupgradeneeded = e => {
+    const db = e.currentTarget.result;
+    const store = db.createObjectStore('screen-capture', {
+      keyPath: 'id',
+      autoIncrement: true
+    });
 
-  store.createIndex('created_at', 'created_at', { unique: false });
-  store.createIndex('url', 'url', { unique: false });
+    store.createIndex('created_at', 'created_at', { unique: false });
+    store.createIndex('url', 'url', { unique: false });
+  };
 };
 
 // Get Store
@@ -58,7 +59,15 @@ const deleteData = async (ids) => {
     request.onsuccess = async () => postMessage(['DELETE_DATA', await getAll()]);
     request.onerror = async () => postMessage(['DELETE_DATA', new Error('CANNOT DELETE')]);
   });
+};
 
+// Clear Store
+const clearStore = async () => {
+  const store = await getStore('readwrite');
+  const request = store.clear();
+  setup();
+  request.onsuccess = async () => postMessage(['CLEAR_STORE', await getAll()]);
+  request.onerror = async () => postMessage(['CLEAR_STORE', new Error('CANNOT DELETE')]);
 };
 
 self.addEventListener('message', async (e) => {
@@ -66,4 +75,7 @@ self.addEventListener('message', async (e) => {
   if (type === 'GET_ALL') await getAll();
   if (type === 'ADD_DATA') await addData(data);
   if (type === 'DELETE_DATA') await deleteData(data);
+  if (type === 'CLEAR_STORE') await clearStore();
 });
+
+setup();

@@ -17,6 +17,7 @@ const recordDelete = document.getElementById('delete');
 const recordDownload = document.getElementById('download');
 const screenCapture = document.getElementById('screen-capture');
 const screenCaptureReset = document.getElementById('reset');
+const clearBtn = document.getElementById('clear');
 
 const showModal = (mode = 'success') => {
   details.open = true;
@@ -231,6 +232,7 @@ recordDownload.addEventListener('click', () => {
   });
 });
 screenCaptureReset.addEventListener('click', clearScreenCapture);
+clearBtn.addEventListener('click', async () => await postMessage(['CLEAR_STORE']));
 
 const handleServiceWorker = async () => {
   if (!navigator.serviceWorker) return;
@@ -242,6 +244,7 @@ const handleServiceWorker = async () => {
     if (data) await displayRecords(data);
     if (type === 'ADD_DATA') showModal();
     if (type === 'DELETE_DATA') showModal();
+    if (type === 'CLEAR_STORE') showModal();
   });
 };
 
