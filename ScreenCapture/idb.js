@@ -15,6 +15,8 @@ const records = document.getElementById('records');
 const recordSettings = document.getElementById('record-settings');
 const recordDelete = document.getElementById('delete');
 const recordDownload = document.getElementById('download');
+const screenCapture = document.getElementById('screen-capture');
+const screenCaptureReset = document.getElementById('reset');
 
 const showModal = (mode = 'success') => {
   details.open = true;
@@ -32,6 +34,39 @@ const postMessage = async (message) => {
   registration.active.postMessage(message);
 };
 
+const time = (date) => new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Ho_Chi_Minh',
+  dayPeriod: 'short',
+  weekday: 'long',
+  month: 'numeric',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  hour12: true,
+  second: 'numeric'
+}).format(date);
+
+// Display Time
+const getTime = () => {
+  const timeEle = document.createElement('p');
+  timeEle.slot = 'time';
+  screenCapture.appendChild(timeEle);
+  setInterval(() => timeEle.innerHTML = time(), 1000);
+};
+
+getTime();
+
+const clearScreenCapture = () => {
+  const tracks = videoStream.srcObject?.getTracks() || [];
+  videoStream.srcObject = undefined;
+  videoPreview.removeAttribute('src');
+  videoStream.slot = 'video';
+  videoPreview.removeAttribute('slot');
+  tracks.forEach(track => track?.stop());
+};
+
+//  Handle Control Screen Capture
 start.addEventListener('click', async () => {
   const stream = await navigator.mediaDevices.getDisplayMedia({
     audio: true,
@@ -52,6 +87,7 @@ start.addEventListener('click', async () => {
     const data = [];
     recorder.ondataavailable = e => data.push(e.data);
     recorder.onstop = () => {
+      if (!videoStream.srcObject) return;
       videoPreview.slot = 'video';
       videoStream.removeAttribute('slot');
       const url = URL.createObjectURL(new Blob(data, { type: mimeType }));
@@ -69,7 +105,6 @@ stop.addEventListener('click', async () => {
 
 saveOffline.addEventListener('click', async () => {
   if (!videoPreview.src) return showModal('fail');
-
   const url = await fetch(videoPreview.src).then(res => res.blob()).then(blob => {
     const file = new FileReader();
     file.readAsDataURL(blob);
@@ -86,10 +121,10 @@ saveOffline.addEventListener('click', async () => {
     created_at: new Date()
   };
   await postMessage(['ADD_DATA', value]);
+  clearScreenCapture();
 });
 
 // Handle close click outside
-
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (recordSettings?.open) recordSettings.open = false;
@@ -156,7 +191,8 @@ const displayRecords = async (data) => {
     const recordEle = document.createElement('custom-capture');
     recordEle.src = url;
     recordEle.value = id;
-    recordEle.innerHTML = new Date(created_at).toLocaleString();
+    recordEle.createdAt = created_at;
+    recordEle.innerHTML = time(new Date(created_at));
     recordEle.slot = 'record';
     return recordEle;
   }));
@@ -169,7 +205,7 @@ const displayRecords = async (data) => {
       if (e.target.checked) recordSettings.slot = 'settings';
 
       const noChecked = [...customCaptures].map(({ checked }) => checked).every(i => !i);
-      if (noChecked) recordSettings.removeAttribute('slot');
+      if (noChecked || !customCaptures) recordSettings.removeAttribute('slot');
     });
   });
 };
@@ -179,14 +215,14 @@ const getSelectedCaptures = () => {
   return [...customCaptures].filter(({ checked }) => checked);
 };
 
-recordDelete.addEventListener('click', async () => await postMessage(['DELETE_ALL', getSelectedCaptures().map(({ value }) => value)]));
-recordDownload.addEventListener('click', e => {
+recordDelete.addEventListener('click', async () => await postMessage(['DELETE_DATA', getSelectedCaptures().map(({ value }) => value)]));
+recordDownload.addEventListener('click', () => {
   getSelectedCaptures().forEach(async ({
     src,
-    innerHTML: createdAt
+    createdAt
   }) => {
     const a = document.createElement('a');
-    a.download = 'Record ' + createdAt.replace(',', ' at');
+    a.download = 'Record ' + new Date(createdAt).toLocaleString().replace(',', ' at');
     a.href = src;
     a.target = '_blank';
     document.body.appendChild(a);
@@ -194,6 +230,7 @@ recordDownload.addEventListener('click', e => {
     a.remove();
   });
 });
+screenCaptureReset.addEventListener('click', clearScreenCapture);
 
 const handleServiceWorker = async () => {
   if (!navigator.serviceWorker) return;

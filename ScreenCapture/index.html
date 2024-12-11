@@ -25,6 +25,7 @@
 
 		fieldset > div {
 			display: flex;
+			flex-direction: column;
 			flex: 1
 		}
 
@@ -202,21 +203,30 @@
 		<li><a href="../indexedDB/index.html">indexedDB</a></li>
 	</ul>
 </nav>
-
+<!-- Screen Capture -->
 <fieldset>
 	<legend>
 		<p class="menu-label">Screen Capture</p>
 		<button id="reset" class="btn">↺</button>
 	</legend>
-	<div>
+	<div id="screen-capture">
 		<template shadowrootmode="open">
+			<slot name="time"></slot>
 			<slot name="video"></slot>
+
+			<style>
+				::slotted(*) {
+					margin: 0;
+					padding: 0;
+				}
+			</style>
 		</template>
 		<video autoplay id="stream" slot="video"></video>
 		<video id="preview" controls autoplay></video>
 	</div>
 </fieldset>
 
+<!-- Control Screen Capture-->
 <fieldset>
 	<legend>Control</legend>
 	<button id="start">Start</button>
@@ -225,6 +235,7 @@
 	<button><a download="Record">Download</a></button>
 </fieldset>
 
+<!-- List Records -->
 <fieldset id="records">
 	<legend>
 		<p class="menu-label">Records</p>

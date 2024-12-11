@@ -51,12 +51,13 @@ const getAll = async () => {
 };
 
 // Delete
-const deleteData = async (id) => {
+const deleteData = async (ids) => {
   const store = await getStore('readwrite');
-  const request = store.delete(id);
-
-  request.onsuccess = async () => postMessage(['DELETE_DATA', await getAll()]);
-  request.onerror = async () => postMessage(['DELETE_DATA', new Error('CANNOT DELETE')]);
+  ids.forEach(id => {
+    const request = store.delete(Number(id));
+    request.onsuccess = async () => postMessage(['DELETE_DATA', await getAll()]);
+    request.onerror = async () => postMessage(['DELETE_DATA', new Error('CANNOT DELETE')]);
+  });
 
 };
 
