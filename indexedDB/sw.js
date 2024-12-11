@@ -35,14 +35,14 @@ const getAll = async () => {
   const request = store.getAll();
 
   request.onsuccess = e => postMessage(['GET_ALL', e.currentTarget.result]);
-  request.onerror = postMessage(['ERROR', 'GET_ALL ERROR']);
+  // request.onerror = postMessage(['ERROR', 'GET_ALL ERROR']);
 };
 
 const addData = async (value) => {
   const store = await getStore();
   const request = store.add(value);
   request.onsuccess = getAll();
-  request.onerror = postMessage(['ERROR', 'ADD_DATA ERROR']);
+  // request.onerror = postMessage(['ERROR', 'ADD_DATA ERROR']);
 
 };
 
@@ -67,7 +67,7 @@ const deleteData = async (key) => {
   const store = await getStore();
   const request = store.delete(Number(key));
   request.onsuccess = getAll();
-  request.onerror = postMessage(['ERROR', 'DELETE_ALL ERROR']);
+  // request.onerror = postMessage(['ERROR', 'DELETE_ALL ERROR']);
 
 };
 
@@ -75,7 +75,7 @@ const clearDB = async () => {
   const store = await getStore();
   const request = store.clear();
   request.onsuccess = postMessage(['CLEAR', []]);
-  request.onerror = postMessage(['ERROR', 'CLEAR_DB ERROR']);
+  // request.onerror = postMessage(['ERROR', 'CLEAR_DB ERROR']);
 };
 
 self.addEventListener('message', async (e) => {

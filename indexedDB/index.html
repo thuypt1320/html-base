@@ -65,67 +65,28 @@
 			flex-wrap: wrap;
 		}
 
-		#settings {
-			background: unset;
-			border: none;
-			font-size: 30px;
-			color: gray;
-			border-radius: 50%;
-			aspect-ratio: 1;
-			padding: 8px;
-			line-height: 0;
-			cursor: pointer;
-		}
-
-		#settings:hover {
-			background: rgba(128, 128, 128, 0.1);
-		}
-
-		#settings:active {
-			background: rgba(128, 128, 128, 0.5);
-			color: white;
-		}
-
-		#settings-popover {
-			position: absolute;
-			background: #fff;
-			border: 1px solid;
-			border-radius: 4px;
-			right: 0;
-			top: 100%;
-			padding: 4px 0;
-			display: inline-flex;
-			flex-direction: column;
-			margin: 0;
-			color: gray
-		}
-
-		#settings-popover > li::marker {
-			content: "";
-		}
-
-		#settings-popover > li {
-			padding-block: 4px;
-			padding-inline: 10px;
-			cursor: pointer;
-			display: inline-flex;
-			gap: 10px;
-			justify-content: space-between;
-			font-family: Arial, serif;
-			font-size: 14px;
-		}
-
-		#settings-popover > li:hover {
-			background: rgba(128, 128, 128, 0.1);
-		}
-
-		#settings-popover > li:active {
-			background: rgba(128, 128, 128, 0.5);
-			color: #ffffff;
-		}
-
 		dialog {
 			text-align: center;
+		}
+
+		.btn {
+			all: unset;
+			cursor: pointer;
+			width: 30px;
+			text-align: center;
+			aspect-ratio: 1;
+			border-radius: 50%;
+			font-size: 24px;
+			color: gray;
+		}
+
+		.btn:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		.btn:active {
+			background: rgba(128, 128, 128, 0.3);
+			color: #fff
 		}
 	</style>
 	<style>
@@ -139,6 +100,47 @@
 			left: 0;
 			text-align: center;
 			width: 100%;
+		}
+	</style>
+
+	<style>
+		#settings {
+			position: relative;
+		}
+
+		#settings ul {
+			position: absolute;
+			border: 1px solid;
+			margin: 0;
+			padding: 0;
+			background: #fff;
+			display: flex;
+			flex-direction: column;
+			width: max-content;
+			top: 100%;
+			right: 0;
+			z-index: 1;
+		}
+
+		#settings li::marker {
+			content: ''
+		}
+
+		#settings li {
+			padding: 5px 10px;
+			display: inline-flex;
+			justify-content: space-between;
+			gap: 4px;
+			cursor: pointer;
+		}
+
+		#settings li:hover {
+			background: rgba(128, 128, 128, 0.1);
+		}
+
+		#settings li:active {
+			background: rgba(128, 128, 128, 0.3);
+			color: #fff;
 		}
 	</style>
 </head>
@@ -191,18 +193,13 @@
 				}
 			</style>
 		</template>
-		<p class="success">--</p>
 	</div>
 </details>
 
 <fieldset>
 	<legend>
 		<p>Upload File</p>
-		<button id="settings">⚙</button>
-		<ul id="settings-popover" style="visibility: hidden">
-			<li id="clear">Clear <span>×</span></li>
-			<li id="reload">Reload <span>↺</span></li>
-		</ul>
+		<button id="reload" class="btn">↺</button>
 	</legend>
 	<form>
 		<label for="attach-file"><span>&nbsp;</span><input type="file" id="attach-file" required/></label>
@@ -227,7 +224,17 @@
 	<input id="search" autocomplete="off"/>
 </fieldset>
 <fieldset id="preview">
-	<legend>Preview</legend>
+	<legend>
+		<p>Preview</p>
+		<details id="settings">
+			<summary class="btn">⚙</summary>
+			<ul>
+				<li id="clear">Clear <span>×</span></li>
+				<li id="multi-delete">Multi-delete <span>×²</span></li>
+				<li id="multi-download">Multi-download <span>⤓</span></li>
+			</ul>
+		</details>
+	</legend>
 	<template id="preview-template">
 		<div class="wrap">
 			<slot name="file" class="preview-file">File</slot>

@@ -13,7 +13,6 @@ const dialogConfirm = dialog.querySelector('#warning-confirm');
 const dialogCancel = dialog.querySelector('#warning-cancel');
 
 const settings = document.getElementById('settings');
-const settingsPopover = document.getElementById('settings-popover');
 const clearBtn = document.getElementById('clear');
 const reloadBtn = document.getElementById('reload');
 const warning = document.getElementById('warning');
@@ -199,8 +198,6 @@ const handleDisplayPreview = async (res = []) => {
   content.replaceChildren(...previews);
 };
 
-// Settings
-
 clearBtn.onclick = () => {
   dialog.showModal();
   dialogConfirm.onclick = async () => {
@@ -212,12 +209,13 @@ clearBtn.onclick = () => {
 
 reloadBtn.onclick = () => postMessage(['RELOAD']);
 
-settings.onclick = () => {
-  if (!settingsPopover.style.visibility) {
-    settingsPopover.style.setProperty('visibility', 'hidden');
-  } else {
-    settingsPopover.style.removeProperty('visibility');
-  }
+// Close settings click outside
+document.onclick = e => {
+  if (!settings.contains(e.target)) settings.open = false;
+};
+
+document.onkeydown = e => {
+  if (e.key === 'Escape') settings.open = false;
 };
 
 // Search
