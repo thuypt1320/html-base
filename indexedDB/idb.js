@@ -101,8 +101,7 @@ class CustomPreview extends HTMLElement {
 
     openBtn.addEventListener('click', async () => {
       const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
-      window.open(url, '_blank');
-      URL.revokeObjectURL(url);
+      window.open((this.isVideo? '../videoPreview.html' + '?src=':'') + url, '_blank');
     });
     fetch(this.url)
       .then(res => res.blob())
@@ -177,6 +176,7 @@ const handleDisplayPreview = async (res = []) => {
     customPreview.value = id;
     customPreview.url = file;
     customPreview.title = title;
+    customPreview.isVideo = isVideo;
     object.data = file;
     video.height = 200;
     video.src = file;
@@ -207,7 +207,13 @@ clearBtn.onclick = () => {
   dialogCancel.onclick = () => dialog.close();
 };
 
-reloadBtn.onclick = () => postMessage(['RELOAD']);
+reloadBtn.onclick = () => {
+  previewObject.data = '';
+  previewVideo.src = '';
+  previewObject.slot = 'file';
+  previewVideo.removeAttribute('slot');
+  form.reset();
+};
 
 // Close settings click outside
 document.onclick = e => {
