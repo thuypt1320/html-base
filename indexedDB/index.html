@@ -127,6 +127,19 @@
 			text-align: center;
 		}
 	</style>
+	<style>
+		#warning summary::marker {
+			content: ''
+		}
+
+		#warning {
+			position: fixed;
+			top: 0;
+			left: 0;
+			text-align: center;
+			width: 100%;
+		}
+	</style>
 </head>
 <body>
 <nav>
@@ -135,6 +148,52 @@
 		<li><a href="../ScreenCapture/index.html">ScreenCapture</a></li>
 	</ul>
 </nav>
+<details id="warning">
+	<summary></summary>
+	<div id="warning-content">
+		<template shadowrootmode="open">
+			<slot></slot>
+			<style>
+				::slotted(*) {
+					padding: 10px;
+					margin: 0;
+					position: relative;
+					display: block;
+				}
+
+				::slotted(*):after, ::slotted(*):before {
+					content: '';
+					display: block;
+					position: absolute;
+					width: 100%;
+					height: 100%;
+					left: 0;
+					top: 0;
+				}
+
+				::slotted(*):after {
+					background: currentColor;
+					opacity: 0.3;
+				}
+
+				::slotted(*):before {
+					background: #fff;
+					z-index: -1;
+				}
+
+				::slotted(.success) {
+					color: green;
+				}
+
+				::slotted(.fail) {
+					color: red;
+				}
+			</style>
+		</template>
+		<p class="success">--</p>
+	</div>
+</details>
+
 <fieldset>
 	<legend>
 		<p>Upload File</p>
@@ -253,287 +312,6 @@
 		<button id="warning-cancel">Cancel</button>
 	</dialog>
 </fieldset>
-
-<!-- Elements -->
-<script>
-	const attachFile = document.getElementById('attach-file');
-	const fileUrl = document.getElementById('file');
-	const previewObject = document.getElementById('preview-attach-file');
-	const previewVideo = document.getElementById('preview-video');
-	const form = document.querySelector('form');
-	const template = document.getElementById('preview-template');
-	const content = document.getElementById('content');
-	const search = document.getElementById('search');
-	const dialog = document.querySelector('dialog');
-	const dialogConfirm = dialog.querySelector('#warning-confirm');
-	const dialogCancel = dialog.querySelector('#warning-cancel');
-</script>
-
-<!-- Broadcast Channel API-->
-<script>
-	const broadcast = new BroadcastChannel('channel');
-</script>
-<!-- Custom Element - File Preview -->
-<script>
-	class CustomPreview extends HTMLElement {
-		constructor () {
-			super();
-			const shadow = this.attachShadow({ mode: 'open' });
-			shadow.appendChild(template.content.cloneNode(true));
-		}
-
-		static observedAttributes = ['value'];
-
-		set value (val) {
-			this.setAttribute('value', val);
-		}
-
-		get value () {
-			return this.getAttribute('value');
-		}
-
-		connectedCallback () {
-			const popover = this.shadowRoot.getElementById('popover');
-			const deleteBtn = this.shadowRoot.getElementById('delete');
-			const editBtn = this.shadowRoot.getElementById('edit');
-			const openBtn = this.shadowRoot.getElementById('open');
-			const downloadBtn = this.shadowRoot.getElementById('download');
-			downloadBtn.download = this.title;
-			popover.style.visibility = 'hidden';
-
-			this.shadowRoot.addEventListener('contextmenu', e => {
-				e.preventDefault();
-				const popover = this.shadowRoot.getElementById('popover');
-				popover.style.top = `${e.offsetY}px`;
-				popover.style.left = `${e.offsetX}px`;
-				popover.style.removeProperty('visibility');
-			}, { capture: true });
-
-			document.addEventListener('click', () => (popover.style.visibility = 'hidden'));
-			document.addEventListener('auxclick', (e) => {
-				if (!this.contains(e.target)) {
-					popover.style.visibility = 'hidden';
-				}
-
-			});
-			deleteBtn.addEventListener('click', () => {
-				deleteData(this.value);
-				handleDisplayPreview();
-			});
-			editBtn.addEventListener('click', () => {
-			});
-
-			openBtn.addEventListener('click', async () => {
-				const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
-				window.open(url, '_blank');
-				URL.revokeObjectURL(url);
-			});
-			fetch(this.url)
-				.then(res => res.blob())
-				.then(blob => URL.createObjectURL(blob))
-				.then(url => downloadBtn.href = url);
-		}
-	}
-
-	customElements.define('custom-preview', CustomPreview);
-</script>
-
-<!-- Submit Form-->
-<script>
-	attachFile.onchange = e => {
-		const [file] = e.target.files;
-		const isVideo = file.type.includes('video');
-
-		const reader = new FileReader();
-		reader.readAsDataURL(file);
-
-		reader.onload = evt => {
-			const url = evt.target.result;
-			fileUrl.value = url;
-
-			if (!isVideo) {
-				previewObject.data = url;
-				previewObject.slot = 'file';
-				previewVideo.slot = '';
-			} else {
-				previewVideo.src = URL.createObjectURL(file);
-				previewObject.slot = '';
-				previewVideo.slot = 'file';
-				previewVideo.controls = true;
-				previewVideo.autoplay = true;
-			}
-		};
-	};
-
-	form.onsubmit = e => {
-		e.preventDefault();
-		const formData = new FormData(e.target);
-		const values = Object.fromEntries(formData.entries());
-		addData(values);
-		handleDisplayPreview();
-		form.reset();
-		attachFile.focus();
-		previewObject.data = '';
-	};
-</script>
-
-<!-- IndexDB API -->
-<script>
-	const req = indexedDB.open('cat', 1);
-	const FACTORY_NAME = 'cat';
-	const STORE_NAME = 'cat';
-
-	req.onupgradeneeded = e => {
-		const store = e.currentTarget.result.createObjectStore(FACTORY_NAME, {
-			keyPath: 'id',
-			autoIncrement: true
-		});
-
-		store.createIndex('file', 'file', { unique: false });
-		store.createIndex('title', 'title', { unique: false });
-	};
-
-	const getStore = (mode = 'readwrite') => {
-		const req = indexedDB.open('cat', 1);
-
-		return new Promise(resolve => {
-			req.onsuccess = e => {
-				resolve(e.currentTarget.result.transaction(STORE_NAME, mode).objectStore(STORE_NAME));
-			};
-		});
-
-	};
-
-	const addData = async (value) => {
-		const store = await getStore();
-		store.add(value);
-		broadcast.postMessage('ADD');
-	};
-
-	const getAll = async () => {
-		const store = await getStore('readonly');
-		const data = store.getAll();
-
-		return new Promise(resolve => {
-			data.onsuccess = e => {
-				const result = e.target.result.filter(({ title }) => new RegExp(`${search.value.trim().toLowerCase()}.*`, 'g').test(title.toLowerCase()));
-				resolve(result);
-			};
-		});
-	};
-
-	const getData = async (key, value) => {
-		const store = await getStore();
-		const req = store.index(key);
-		const record = req.get(value);
-		return new Promise((resolve, reject) => {
-			record.onsuccess = e => {
-				if (!e.target.result) {
-					reject('Not Found');
-					return;
-				}
-				resolve(e.target.result);
-			};
-
-			record.onerror = () => reject('Error IndexedDB');
-		});
-	};
-
-	const deleteData = async (key) => {
-		const store = await getStore();
-		store.delete(Number(key));
-		broadcast.postMessage('DELETE');
-	};
-
-	const clearDB = async () => {
-		const store = await getStore();
-		store.clear();
-		broadcast.postMessage('CLEAR');
-	};
-</script>
-
-<!-- Display Preview -->
-<script>
-	const handleDisplayPreview = async () => {
-		const res = await getAll();
-		const data = await Promise.all(res.map(async ({
-			file,
-			...item
-		}) => {
-			const blob = await fetch(file).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
-			return {
-				...item,
-				file: blob,
-				isVideo: file.includes('video')
-			};
-		}));
-
-		const previews = await Promise.all(data.map(async ({
-			file,
-			title,
-			id,
-			isVideo
-		}) => {
-			const customPreview = document.createElement('custom-preview');
-			const object = document.createElement('object');
-			const video = document.createElement('video');
-			const p = document.createElement('p');
-			customPreview.value = id;
-			customPreview.url = file;
-			customPreview.title = title;
-			object.data = file;
-			video.height = 200;
-			video.src = file;
-			video.autoplay = true;
-			video.controls = true;
-			p.slot = 'label';
-			p.innerHTML = title;
-
-			if (isVideo) {
-				video.slot = 'file';
-			} else {
-				object.slot = 'file';
-			}
-			customPreview.append(object, p, video);
-
-			customPreview.slot = 'content';
-			return customPreview;
-		}));
-		content.replaceChildren(...previews);
-	};
-
-	broadcast.addEventListener('message', () => handleDisplayPreview());
-	handleDisplayPreview();
-</script>
-<!-- Settings -->
-<script>
-	const settings = document.getElementById('settings');
-	const settingsPopover = document.getElementById('settings-popover');
-	const clearBtn = document.getElementById('clear');
-	const reloadBtn = document.getElementById('reload');
-
-	clearBtn.onclick = () => {
-		dialog.showModal();
-		dialogConfirm.onclick = () => {
-			clearDB();
-			handleDisplayPreview();
-			dialog.close();
-		};
-		dialogCancel.onclick = () => dialog.close();
-	};
-
-	reloadBtn.onclick = () => broadcast.postMessage('RELOAD');
-
-	settings.onclick = () => {
-		!settingsPopover.style.visibility ?
-			settingsPopover.style.setProperty('visibility', 'hidden')
-			: settingsPopover.style.removeProperty('visibility');
-	};
-</script>
-
-<!-- Search -->
-<script>
-	search.onchange = () => handleDisplayPreview();
-</script>
+<script src="idb.js"></script>
 </body>
 </html>
