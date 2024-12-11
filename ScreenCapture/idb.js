@@ -184,7 +184,8 @@ customElements.define('custom-capture', Capture);
 
 // Display Record
 const displayRecords = async (data) => {
-  const list = (data.map(({
+  if (!data) return;
+  const list = (data?.map(({
     url,
     id,
     created_at
@@ -196,7 +197,7 @@ const displayRecords = async (data) => {
     recordEle.innerHTML = time(new Date(created_at));
     recordEle.slot = 'record';
     return recordEle;
-  }));
+  })) || [];
   records.querySelectorAll('[slot=record]').forEach(child => child.remove());
   records.append(...list);
   const customCaptures = document.querySelectorAll('custom-capture');
@@ -206,7 +207,7 @@ const displayRecords = async (data) => {
       if (e.target.checked) recordSettings.slot = 'settings';
 
       const noChecked = [...customCaptures].map(({ checked }) => checked).every(i => !i);
-      if (noChecked || !customCaptures) recordSettings.removeAttribute('slot');
+      if (noChecked) recordSettings.removeAttribute('slot');
     });
   });
 };
@@ -241,10 +242,12 @@ const handleServiceWorker = async () => {
 
   await navigator.serviceWorker.addEventListener('message', async e => {
     const [type, data] = e.data;
-    if (data) await displayRecords(data);
-    if (type === 'ADD_DATA') showModal();
-    if (type === 'DELETE_DATA') showModal();
-    if (type === 'CLEAR_STORE') showModal();
+    if (type === 'ERROR') {
+      showModal('fail');
+      return;
+    }
+    showModal();
+    await displayRecords(data);
   });
 };
 
