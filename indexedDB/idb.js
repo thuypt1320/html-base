@@ -309,7 +309,7 @@ const handleDisplayPreview = async (res = []) => {
 
 clearBtn.onclick = () => {
   dialog.showModal();
-  dialogConfirm.onclick = postMessage(['CLEAR_DB']);
+  dialogConfirm.onclick = () => postMessage(['CLEAR_DB']);
 };
 dialogConfirm.addEventListener('click', () => dialog.close());
 dialogCancel.addEventListener('click', () => dialog.close());
