@@ -345,3 +345,34 @@ document.onkeydown = e => {
 search.oninput = () => postMessage(['SEARCH', search.value]);
 
 postMessage(['GET_ALL']).then();
+
+const dataTransfer = new DataTransfer();
+// Dispatch Select All Event
+document.addEventListener('keydown', (e) => {
+
+  const keys = dataTransfer.getData('text/plain').split(',');
+  if (keys.includes(e.key)) return;
+  keys.push(e.key);
+  dataTransfer.setData('text/plain', keys.join(','));
+
+});
+
+document.addEventListener('keyup', () => {
+  const keys = dataTransfer.getData('text/plain').split(',').filter(i => i);
+  if (keys.join('+') === 'Meta+a' || keys.join('+') === 'Control+a') {
+    document.dispatchEvent(new KeyboardEvent('selectall'));
+  }
+  dataTransfer.clearData('text/plain');
+});
+
+document.addEventListener('selectall', () => {
+  document.getSelection().removeAllRanges();
+  document.querySelectorAll('custom-preview').forEach(child => {
+    child.checked = true;
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('custom-preview').forEach(child => child.checked = false);
+});
