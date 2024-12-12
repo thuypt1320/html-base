@@ -122,6 +122,15 @@
 			z-index: 1;
 		}
 
+		#settings ul:before {
+			content: ' Selected ('attr(data-selected)')';
+			color: gray;
+			font-size: 14px;
+			text-align: end;
+			padding-inline: 10px;
+			font-style: italic;
+		}
+
 		#settings li::marker {
 			content: ''
 		}
@@ -228,7 +237,8 @@
 		<p>Preview</p>
 		<details id="settings">
 			<summary class="btn">⚙</summary>
-			<ul>
+			<ul id="settings-content">
+				<li id="unselect">Unselect All <span>⮐</span></li>
 				<li id="clear">Clear <span>×</span></li>
 				<li id="multi-delete">Multi-delete <span>×²</span></li>
 				<li id="multi-download">Multi-download <span>⤓</span></li>
@@ -236,15 +246,16 @@
 		</details>
 	</legend>
 	<template id="preview-template">
-		<div class="wrap">
+		<label class="wrap">
+			<input type="checkbox" hidden/>
 			<slot name="file" class="preview-file"></slot>
 			<slot name="label" class="file-name"></slot>
-			<div id="popover">
-				<button id="open">Open New Tab</button>
-				<button id="delete">Delete</button>
-				<button id="edit">Edit</button>
-				<a href="#" id="download" download>Download</a>
-			</div>
+		</label>
+		<div id="popover">
+			<button id="open">Open New Tab</button>
+			<button id="delete">Delete</button>
+			<button id="edit">Edit</button>
+			<a href="#" id="download" download>Download</a>
 		</div>
 		<style>
 			.wrap {
@@ -284,13 +295,17 @@
 			}
 
 			.preview-file {
-				border: 1px solid;
+				box-shadow: 0 0 5px 0;
 				min-width: 50px;
 				height: fit-content;
 				display: flex;
 				border-radius: 4px;
 				justify-content: center;
 				align-items: center;
+			}
+
+			.wrap:has(input:checked) > .preview-file {
+				outline: 2px solid blue;
 			}
 
 			::slotted(*) {

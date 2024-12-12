@@ -13,10 +13,12 @@ const dialogConfirm = dialog.querySelector('#warning-confirm');
 const dialogCancel = dialog.querySelector('#warning-cancel');
 
 const settings = document.getElementById('settings');
+const unselectBtn = document.getElementById('unselect');
 const clearBtn = document.getElementById('clear');
 const reloadBtn = document.getElementById('reload');
 const warning = document.getElementById('warning');
 const warningContent = document.getElementById('warning-content');
+const selected = document.getElementById('settings-content');
 
 // Show Warning
 const showWarning = (isSuccess = true, message) => {
@@ -57,9 +59,10 @@ class CustomPreview extends HTMLElement {
     super();
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.appendChild(template.content.cloneNode(true));
+    this._selectedCount = 0;
   }
 
-  static observedAttributes = ['value'];
+  static observedAttributes = ['value', 'checked'];
 
   set value (val) {
     this.setAttribute('value', val);
@@ -69,12 +72,41 @@ class CustomPreview extends HTMLElement {
     return this.getAttribute('value');
   }
 
+  set checked (val) {
+    this.setAttribute('checked', val);
+  }
+
+  get checked () {
+    return this.shadowRoot.querySelector('input').checked;
+  }
+
+  set selectedCount (val) {
+    this._selectedCount = val;
+  }
+
+  get selectedCount () {
+    return this._selectedCount;
+  }
+
+  updateSelectedCount () {
+    // Count
+    const siblings = this.getSiblings();
+    this.selectedCount = this.getSelected(siblings).length;
+  }
+
   createEvents () {
     const popover = this.shadowRoot.getElementById('popover');
     const deleteBtn = this.shadowRoot.getElementById('delete');
     const editBtn = this.shadowRoot.getElementById('edit');
     const openBtn = this.shadowRoot.getElementById('open');
     const downloadBtn = this.shadowRoot.getElementById('download');
+    const input = this.shadowRoot.querySelector('input');
+
+    // Select Events
+    input.addEventListener('input', e => {
+      this.checked = e.target.checked;
+      this.dispatchEvent(new InputEvent('change', e));
+    });
 
     // Show custom `contextmenu`
     this.shadowRoot.addEventListener('contextmenu', e => {
@@ -113,6 +145,14 @@ class CustomPreview extends HTMLElement {
       .then(url => downloadBtn.href = url);
   }
 
+  getSiblings () {
+    return this.parentElement.querySelectorAll(this.tagName.toLowerCase());
+  }
+
+  getSelected (selectors) {
+    return [...selectors].filter(({ checked }) => checked);
+  }
+
   updateContent () {
     const filePreview = document.createElement('object');
     const videoPreview = document.createElement('video');
@@ -139,6 +179,14 @@ class CustomPreview extends HTMLElement {
   connectedCallback () {
     this.createEvents();
     this.updateContent();
+  }
+
+  attributeChangedCallback (name, oldVal, currentValue) {
+    if (name === 'checked') {
+      this.shadowRoot.querySelector('input').checked = JSON.parse(currentValue);
+      this.updateSelectedCount();
+      this.dispatchEvent(new InputEvent('change'));
+    }
   }
 }
 
@@ -207,6 +255,10 @@ const handleDisplayPreview = async (res = []) => {
     customPreview.title = title;
     customPreview.isVideo = isVideo;
     customPreview.slot = 'content';
+
+    customPreview.addEventListener('change', e => {
+      selected.setAttribute('data-selected', e.target.selectedCount);
+    });
     return customPreview;
   }));
   content.replaceChildren(...previews);
@@ -227,6 +279,10 @@ reloadBtn.onclick = () => {
   previewObject.slot = 'file';
   previewVideo.removeAttribute('slot');
   form.reset();
+};
+
+unselectBtn.onclick = () => {
+  document.querySelectorAll('custom-preview').forEach(child => child.toggleAttribute('checked', false));
 };
 
 // Close settings click outside
