@@ -16,6 +16,8 @@ const settings = document.getElementById('settings');
 const unselectBtn = document.getElementById('unselect');
 const clearBtn = document.getElementById('clear');
 const reloadBtn = document.getElementById('reload');
+const multiDeleteBtn = document.getElementById('multi-delete');
+const multiDownloadBtn = document.getElementById('multi-download');
 const warning = document.getElementById('warning');
 const warningContent = document.getElementById('warning-content');
 const selected = document.getElementById('settings-content');
@@ -25,7 +27,7 @@ const showWarning = (isSuccess = true, message) => {
   warning.open = true;
   const p = document.createElement('p');
   p.classList.add(isSuccess ? 'success' : 'fail');
-  p.innerHTML = message || isSuccess ? 'SUCCESS' : 'FAIL';
+  p.innerHTML = message || (isSuccess ? 'SUCCESS' : 'FAIL');
 
   warningContent.replaceChildren(p);
   setTimeout(() => warning.open = false, 1200);
@@ -38,7 +40,7 @@ const handleServiceWorker = async () => {
 
   await navigator.serviceWorker.addEventListener('message', async (e) => {
     const [type, data] = e.data;
-    showWarning(type !== 'ERROR');
+    showWarning(type !== 'ERROR', data.message);
     if (data && type !== 'ERROR') await handleDisplayPreview(data);
   });
 };
@@ -231,6 +233,7 @@ form.onsubmit = async e => {
 
 // Display Preview
 const handleDisplayPreview = async (res = []) => {
+  selected.removeAttribute('data-selected');
   const data = await Promise.all(res.map(async ({
     file,
     ...item
@@ -283,6 +286,15 @@ reloadBtn.onclick = () => {
 
 unselectBtn.onclick = () => {
   document.querySelectorAll('custom-preview').forEach(child => child.toggleAttribute('checked', false));
+};
+
+multiDeleteBtn.onclick = async () => {
+  const customPreview = document.querySelectorAll('custom-preview');
+  const ids = [...customPreview].filter(({ checked }) => checked).map(({ value }) => value);
+
+  await postMessage(['MULTI-DELETE', ids]);
+};
+multiDownloadBtn.onclick = () => {
 };
 
 // Close settings click outside

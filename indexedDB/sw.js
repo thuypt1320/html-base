@@ -78,10 +78,25 @@ const clearDB = async () => {
   // request.onerror = postMessage(['ERROR', 'CLEAR_DB ERROR']);
 };
 
+const deleteMulti = async (data) => {
+  if (!data.length || !data) {
+    await postMessage(['ERROR', { message: 'DID YOU SELECT SOME?' }]);
+    return;
+  }
+
+  const store = await getStore();
+  data.forEach(value => {
+    const request = store.delete(Number(value));``
+    const isLast = data.at(-1) === value;
+    if (isLast) request.onsuccess = getAll();
+  });
+};
+
 self.addEventListener('message', async (e) => {
   const [type, data] = e.data;
   if (type === 'GET_ALL') await getAll();
   if (type === 'CLEAR_DB') await clearDB();
   if (type === 'ADD_DATA') await addData(data);
   if (type === 'DELETE_DATA') await deleteData(data);
+  if (type === 'MULTI-DELETE') await deleteMulti(data);
 });
