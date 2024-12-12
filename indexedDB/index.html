@@ -237,8 +237,8 @@
 	</legend>
 	<template id="preview-template">
 		<div class="wrap">
-			<slot name="file" class="preview-file">File</slot>
-			<slot name="label" class="file-name">Label</slot>
+			<slot name="file" class="preview-file"></slot>
+			<slot name="label" class="file-name"></slot>
 			<div id="popover">
 				<button id="open">Open New Tab</button>
 				<button id="delete">Delete</button>
@@ -293,13 +293,20 @@
 				align-items: center;
 			}
 
-			::slotted(:not(video)) {
-				pointer-events: none;
+			::slotted(*) {
+				margin: 0;
+				padding: 0;
+				display: inline-block;
+				text-align: center;
+				width: 100%;
 			}
 
-			::slotted(p) {
-				padding: 0;
-				margin: 0;
+			::slotted(video) {
+				max-width: 100%;
+			}
+
+			::slotted(:not(video)) {
+				pointer-events: none;
 			}
 
 			.file-name {

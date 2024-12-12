@@ -69,15 +69,14 @@ class CustomPreview extends HTMLElement {
     return this.getAttribute('value');
   }
 
-  connectedCallback () {
+  createEvents () {
     const popover = this.shadowRoot.getElementById('popover');
     const deleteBtn = this.shadowRoot.getElementById('delete');
     const editBtn = this.shadowRoot.getElementById('edit');
     const openBtn = this.shadowRoot.getElementById('open');
     const downloadBtn = this.shadowRoot.getElementById('download');
-    downloadBtn.download = this.title;
-    popover.style.visibility = 'hidden';
 
+    // Show custom `contextmenu`
     this.shadowRoot.addEventListener('contextmenu', e => {
       e.preventDefault();
       const popover = this.shadowRoot.getElementById('popover');
@@ -85,28 +84,61 @@ class CustomPreview extends HTMLElement {
       popover.style.left = `${e.offsetX}px`;
       popover.style.removeProperty('visibility');
     }, { capture: true });
-
+    // Hidden menu when click outside
     document.addEventListener('click', () => (popover.style.visibility = 'hidden'));
+    // Hidden menu when other menu show
     document.addEventListener('auxclick', (e) => {
       if (!this.contains(e.target)) {
         popover.style.visibility = 'hidden';
       }
-
     });
+    // Menu Buttons Events - Delete Event
     deleteBtn.addEventListener('click', async () => {
       await postMessage(['DELETE_DATA', this.value]);
     });
+    // ## Menu Buttons Events - Edit Event
     editBtn.addEventListener('click', () => {
     });
-
+    // Menu Buttons Events - Open New Tab Event
     openBtn.addEventListener('click', async () => {
       const url = await fetch(this.url).then(res => res.blob()).then(blob => URL.createObjectURL(blob));
-      window.open((this.isVideo? '../videoPreview.html' + '?src=':'') + url, '_blank');
+      window.open((this.isVideo ? '../videoPreview.html' + '?src=' : '') + url, '_blank');
     });
+    // Menu Buttons Events - Download Event
+    downloadBtn.download = this.title;
+    popover.style.visibility = 'hidden';
     fetch(this.url)
       .then(res => res.blob())
       .then(blob => URL.createObjectURL(blob))
       .then(url => downloadBtn.href = url);
+  }
+
+  updateContent () {
+    const filePreview = document.createElement('object');
+    const videoPreview = document.createElement('video');
+    const label = document.createElement('p');
+
+    videoPreview.controls = true;
+
+    filePreview.slot = 'file';
+    videoPreview.slot = 'file';
+    label.slot = 'label';
+
+    filePreview.data = this.url;
+    videoPreview.src = this.url;
+    label.innerHTML = this.title;
+
+    this.appendChild(label);
+    if (this.isVideo) {
+      this.appendChild(videoPreview);
+    } else {
+      this.appendChild(filePreview);
+    }
+  }
+
+  connectedCallback () {
+    this.createEvents();
+    this.updateContent();
   }
 }
 
@@ -170,28 +202,10 @@ const handleDisplayPreview = async (res = []) => {
     isVideo
   }) => {
     const customPreview = document.createElement('custom-preview');
-    const object = document.createElement('object');
-    const video = document.createElement('video');
-    const p = document.createElement('p');
     customPreview.value = id;
     customPreview.url = file;
     customPreview.title = title;
     customPreview.isVideo = isVideo;
-    object.data = file;
-    video.height = 200;
-    video.src = file;
-    video.autoplay = true;
-    video.controls = true;
-    p.slot = 'label';
-    p.innerHTML = title;
-
-    if (isVideo) {
-      video.slot = 'file';
-    } else {
-      object.slot = 'file';
-    }
-    customPreview.append(object, p, video);
-
     customPreview.slot = 'content';
     return customPreview;
   }));
