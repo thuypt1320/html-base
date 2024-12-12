@@ -241,7 +241,6 @@
 				<li id="unselect">Unselect All <span>⮐</span></li>
 				<li id="clear">Clear <span>×</span></li>
 				<li id="multi-delete">Multi-delete <span>×²</span></li>
-				<li id="multi-download">Multi-download <span>⤓</span></li>
 			</ul>
 		</details>
 	</legend>
@@ -257,7 +256,33 @@
 				<a href="#" id="download" download>Download</a>
 			</div>
 		</label>
+		<dialog open hidden>
+			<p>Filename will be changed to '
+				<slot></slot>
+				'
+			</p>
+			<button>Cancel</button>
+			<button>OK</button>
+		</dialog>
+
 		<style>
+			dialog {
+				text-align: center;
+			}
+
+			dialog button {
+				all: revert;
+			}
+
+			slot[name='label']::slotted(*) {
+				all: unset;
+				max-width: 400px;
+			}
+
+			slot[name='file']::slotted(:not(video)) {
+				width: 50px;
+			}
+
 			.wrap {
 				width: fit-content;
 				position: relative;
@@ -336,8 +361,8 @@
 			<slot name="content"></slot>
 		</template>
 	</div>
-	<dialog>
-		<p id="warning-clear">All Data Clear, Cannot Undo!!</p>
+	<dialog id="warning-dialog">
+		<p id="warning-message">All Data Clear, Cannot Undo!!</p>
 		<button id="warning-confirm">OK</button>
 		<button id="warning-cancel">Cancel</button>
 	</dialog>

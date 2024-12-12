@@ -8,7 +8,7 @@ const form = document.querySelector('form');
 const template = document.getElementById('preview-template');
 const content = document.getElementById('content');
 const search = document.getElementById('search');
-const dialog = document.querySelector('dialog');
+const dialog = document.querySelector('#warning-dialog');
 const dialogConfirm = dialog.querySelector('#warning-confirm');
 const dialogCancel = dialog.querySelector('#warning-cancel');
 
@@ -17,10 +17,10 @@ const unselectBtn = document.getElementById('unselect');
 const clearBtn = document.getElementById('clear');
 const reloadBtn = document.getElementById('reload');
 const multiDeleteBtn = document.getElementById('multi-delete');
-const multiDownloadBtn = document.getElementById('multi-download');
 const warning = document.getElementById('warning');
 const warningContent = document.getElementById('warning-content');
 const selected = document.getElementById('settings-content');
+const dialogMessage = document.getElementById('warning-message');
 
 // Show Warning
 const showWarning = (isSuccess = true, message) => {
@@ -130,8 +130,35 @@ class CustomPreview extends HTMLElement {
     deleteBtn.addEventListener('click', async () => {
       await postMessage(['DELETE_DATA', this.value]);
     });
-    // ## Menu Buttons Events - Edit Event
+    // Menu Buttons Events - Edit Event
     editBtn.addEventListener('click', () => {
+      const label = this.querySelector('[slot=\'label\']');
+      label.removeAttribute('readOnly');
+      label.focus();
+      label.select();
+      label.addEventListener('blur', () => {
+        label.readOnly = true;
+        if (label.value === this.title) return;
+
+        if (!label.value) {
+          label.value = this.title;
+          // Handle auto-resize label width
+          label.dispatchEvent(new InputEvent('input'));
+          return;
+        }
+        dialog.showModal();
+        dialog.querySelectorAll('[slot="message"]').forEach(child => child.remove());
+        dialogMessage.innerHTML = 'Filename will be changed from \'' + this.title + '\' to \'' + label.value + '\'?';
+        dialogConfirm.onclick = () => postMessage(['UPDATE_DATA', {
+          id: Number(this.value),
+          title: label.value
+        }]);
+        dialogCancel.onclick = () => {
+          label.value = this.title;
+          // Handle auto-resize label width
+          label.dispatchEvent(new InputEvent('input'));
+        };
+      });
     });
     // Menu Buttons Events - Open New Tab Event
     openBtn.addEventListener('click', async () => {
@@ -158,17 +185,18 @@ class CustomPreview extends HTMLElement {
   updateContent () {
     const filePreview = document.createElement('object');
     const videoPreview = document.createElement('video');
-    const label = document.createElement('p');
+    const label = document.createElement('input');
 
     videoPreview.controls = true;
 
     filePreview.slot = 'file';
     videoPreview.slot = 'file';
     label.slot = 'label';
+    label.readOnly = true;
 
     filePreview.data = this.url;
     videoPreview.src = this.url;
-    label.innerHTML = this.title;
+    label.value = this.title;
 
     this.appendChild(label);
     if (this.isVideo) {
@@ -176,6 +204,21 @@ class CustomPreview extends HTMLElement {
     } else {
       this.appendChild(filePreview);
     }
+    const handleAutoResize = () => {
+      const {
+        fontSize,
+        fontFamily,
+        paddingLeft,
+        paddingRight
+      } = window.getComputedStyle(label);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.font = `${fontSize} ${fontFamily}`;
+      const labelWidth = ctx.measureText(label.value || '').width + parseFloat(paddingLeft) + parseFloat(paddingRight) + 20;
+      label.style.width = labelWidth + 'px';
+    };
+    handleAutoResize();
+    label.addEventListener('input', () => handleAutoResize());
   }
 
   connectedCallback () {
@@ -258,10 +301,7 @@ const handleDisplayPreview = async (res = []) => {
     customPreview.title = title;
     customPreview.isVideo = isVideo;
     customPreview.slot = 'content';
-
-    customPreview.addEventListener('change', e => {
-      selected.setAttribute('data-selected', e.target.selectedCount);
-    });
+    customPreview.addEventListener('change', e => selected.setAttribute('data-selected', e.target.selectedCount));
     return customPreview;
   }));
   content.replaceChildren(...previews);
@@ -269,12 +309,10 @@ const handleDisplayPreview = async (res = []) => {
 
 clearBtn.onclick = () => {
   dialog.showModal();
-  dialogConfirm.onclick = async () => {
-    await postMessage(['CLEAR_DB']);
-    dialog.close();
-  };
-  dialogCancel.onclick = () => dialog.close();
+  dialogConfirm.onclick = postMessage(['CLEAR_DB']);
 };
+dialogConfirm.addEventListener('click', () => dialog.close());
+dialogCancel.addEventListener('click', () => dialog.close());
 
 reloadBtn.onclick = () => {
   previewObject.data = '';
@@ -294,9 +332,6 @@ multiDeleteBtn.onclick = async () => {
 
   await postMessage(['MULTI-DELETE', ids]);
 };
-multiDownloadBtn.onclick = () => {
-};
-
 // Close settings click outside
 document.onclick = e => {
   if (!settings.contains(e.target)) settings.open = false;

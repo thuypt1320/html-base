@@ -86,10 +86,29 @@ const deleteMulti = async (data) => {
 
   const store = await getStore();
   data.forEach(value => {
-    const request = store.delete(Number(value));``
+    const request = store.delete(Number(value));
     const isLast = data.at(-1) === value;
     if (isLast) request.onsuccess = getAll();
   });
+};
+
+const updateData = async (data) => {
+  const {
+    id,
+    title,
+  } = data;
+
+  const store = await getStore('readwrite');
+  const request = await store.get(id);
+
+  request.onsuccess = e => {
+    const data = e.currentTarget.result;
+    data.title = title;
+
+    const putRequest = store.put(data);
+    putRequest.onsuccess = () => getAll();
+    putRequest.onerror = () => postMessage(['ERROR', 'UPDATE_DATA ERROR']);
+  };
 };
 
 self.addEventListener('message', async (e) => {
@@ -99,4 +118,5 @@ self.addEventListener('message', async (e) => {
   if (type === 'ADD_DATA') await addData(data);
   if (type === 'DELETE_DATA') await deleteData(data);
   if (type === 'MULTI-DELETE') await deleteMulti(data);
+  if (type === 'UPDATE_DATA') await updateData(data);
 });
