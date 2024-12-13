@@ -349,15 +349,15 @@ postMessage(['GET_ALL']).then();
 const dataTransfer = new DataTransfer();
 // Dispatch Select All Event
 document.addEventListener('keydown', (e) => {
-
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
   const keys = dataTransfer.getData('text/plain').split(',');
   if (keys.includes(e.key)) return;
   keys.push(e.key);
   dataTransfer.setData('text/plain', keys.join(','));
-
 });
 
-document.addEventListener('keyup', () => {
+document.addEventListener('keyup', (e) => {
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
   const keys = dataTransfer.getData('text/plain').split(',').filter(i => i);
   if (keys.join('+') === 'Meta+a' || keys.join('+') === 'Control+a') {
     document.dispatchEvent(new KeyboardEvent('selectall'));

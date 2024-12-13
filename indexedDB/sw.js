@@ -110,6 +110,12 @@ const updateData = async (data) => {
     putRequest.onerror = () => postMessage(['ERROR', 'UPDATE_DATA ERROR']);
   };
 };
+const searchData = async (data) => {
+  const store = await getStore('readwrite');
+  // All records start with <data>
+  const request = await store.index('title').getAll(IDBKeyRange.bound(data, data + '\uffff'));
+  request.onsuccess = e => postMessage(['SEARCH', e.target.result]);
+};
 
 self.addEventListener('message', async (e) => {
   const [type, data] = e.data;
@@ -119,4 +125,5 @@ self.addEventListener('message', async (e) => {
   if (type === 'DELETE_DATA') await deleteData(data);
   if (type === 'MULTI-DELETE') await deleteMulti(data);
   if (type === 'UPDATE_DATA') await updateData(data);
+  if (type === 'SEARCH') await searchData(data);
 });
