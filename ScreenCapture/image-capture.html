@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="manifest" href="../manifest.json"/>
+	<link rel="icon" href="../cat.svg"/>
+	<title>Screen Capture - ImageCapture</title>
+	<style>
+		video {
+			min-width: 200px;
+			max-width: 80%;
+		}
+
+		.control-buttons {
+			display: inline-flex;
+			width: 100%;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.control-buttons p {
+			margin: 0;
+			padding: 0;
+			display: inline-flex;
+			gap: 4px;
+			width: 100%;
+			justify-content: center;
+		}
+
+		.control-buttons button {
+			display: inline-flex;
+			align-items: center;
+		}
+
+		[id*=play-] {
+			font-size: 10px;
+		}
+
+		[id*=pause-] span {
+			display: inline-block;
+			rotate: 90deg;
+		}
+
+		.control-buttons #time-update {
+			flex: 1;
+		}
+	</style>
+</head>
+<body>
+<template shadowrootmode="open">
+	<slot name="video"></slot>
+</template>
+
+<fieldset slot="video" id="capture-fieldset">
+	<legend>Capture</legend>
+	<video id="video-capture" autoplay></video>
+	<div class="control-buttons">
+		<p>
+			<span>
+				<template shadowrootmode="open">
+				<slot name="capture-button"></slot>
+				<style>
+					::slotted(button) {
+						background-color: unset;
+						border-width: 1px;
+					}
+
+					::slotted([id*=stop-]) {
+						color: red;
+					}
+				</style>
+			</template>
+			<button id="start-capture" slot="capture-button">▶︎</button>
+			<button id="stop-capture">■</button>
+			</span>
+			<span id="duration-capture">00:00</span>
+		</p>
+	</div>
+</fieldset>
+
+<fieldset id="record-fieldset">
+	<legend>Record</legend>
+	<video id="video-record"></video>
+	<div class="control-buttons">
+		<p>
+			<span>
+				<template shadowrootmode="open">
+					<slot name="record-button"></slot>
+				</template>
+				<button id="play-record" slot="record-button">▶︎</button>
+				<button id="pause-record"><span>=</span></button>
+			</span>
+			<progress id="time-update" value="0"></progress>
+			<span id="time">--:--</span>
+			<button slot="download" id="download">
+				<span>
+					<template shadowrootmode="open">
+						<slot name="download"><span>⇥</span></slot>
+						<style>
+							slot span {
+								display: inline-block;
+								rotate: 90deg;
+							}
+						</style>
+					</template>
+					<span id="percent-download"></span>
+				</span>
+			</button>
+			<button id="new-capture">+</button>
+		</p>
+	</div>
+</fieldset>
+<script src="./image-capture.js"></script>
+</body>
+</html>
