@@ -4,6 +4,7 @@ const capture = document.getElementById('video-capture');
 const record = document.getElementById('video-record');
 const startCaptureBtn = document.getElementById('start-capture');
 const stopCaptureBtn = document.getElementById('stop-capture');
+const pauseCaptureBtn = document.getElementById('pause-capture');
 const playRecordBtn = document.getElementById('play-record');
 const pauseRecordBtn = document.getElementById('pause-record');
 const downloadRecordBtn = document.getElementById('download');
@@ -12,7 +13,6 @@ const timeTxt = document.getElementById('time');
 const durationCaptureTxt = document.getElementById('duration-capture');
 const newCaptureBtn = document.getElementById('new-capture');
 const dataTransfer = new DataTransfer();
-const percentDownload = document.getElementById('percent-download');
 
 // #
 // record.src = '../assets/video.mp4';
@@ -43,6 +43,16 @@ const handleRecord = async (stream) => {
 
   const recorder = new MediaRecorder(stream, options);
   recorder.start(1);
+  pauseCaptureBtn.addEventListener('click', () => (recorder.state === 'recording') && recorder.pause());
+  recorder.onpause = () => {
+    capture.pause();
+    pauseCaptureBtn.addEventListener('click', () => recorder.resume());
+  };
+
+  recorder.onresume = () => {
+    capture.play();
+    pauseCaptureBtn.addEventListener('click', () => recorder.pause());
+  };
   const data = [];
   recorder.ondataavailable = evt => data.push(evt.data);
   recorder.onstop = () => {
@@ -66,15 +76,8 @@ const startCapture = async () => {
 
     await handleRecord(stream);
     capture.srcObject = stream;
-
     capture.ontimeupdate = e => {
-      const minute = (seconds) => {
-        const m = Math.floor(seconds / 60);
-        const s = parseInt(seconds) - m * 60;
-        return `${m.toFixed(0).padStart(2, '0')}:${s.toFixed(0).padStart(2, '0')}`;
-      };
-
-      durationCaptureTxt.innerText = minute(e.target.currentTime);
+      durationCaptureTxt.innerText = e.target.currentTime.toFixed(0).padStart(2, '0');
       dataTransfer.setData('text/plain', e.target.currentTime);
     };
   } catch {
@@ -104,7 +107,7 @@ const playRecord = () => {
   record.ontimeupdate = e => {
     if (e.target.duration !== Infinity) timeProgress.max = e.target.duration;
     timeProgress.value = e.target.currentTime;
-    timeTxt.innerText = `${timeProgress.value.toFixed(0).padStart(2, '0')}:${timeProgress.max.toFixed(0).padStart(2, '0')}`;
+    timeTxt.innerText = `${timeProgress.value.toFixed(0).padStart(2, '0')}/${timeProgress.max.toFixed(0).padStart(2, '0')}`;
   };
 
   record.onended = () => {

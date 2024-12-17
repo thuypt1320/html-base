@@ -39,10 +39,6 @@
 			font-size: 10px;
 		}
 
-		[id*=pause-] span {
-			display: inline-block;
-			rotate: 90deg;
-		}
 
 		.control-buttons #time-update {
 			flex: 1;
@@ -59,6 +55,7 @@
 	<video id="video-capture" autoplay></video>
 	<div class="control-buttons">
 		<p>
+			<button id="pause-capture" slot="capture-button"><span>▬</span></button>
 			<span>
 				<template shadowrootmode="open">
 				<slot name="capture-button"></slot>
@@ -76,7 +73,7 @@
 			<button id="start-capture" slot="capture-button">▶︎</button>
 			<button id="stop-capture">■</button>
 			</span>
-			<span id="duration-capture">00:00</span>
+			<span id="duration-capture">00/00</span>
 		</p>
 	</div>
 </fieldset>
