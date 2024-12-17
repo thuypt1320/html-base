@@ -17,6 +17,13 @@ const dataTransfer = new DataTransfer();
 // #
 // record.src = '../assets/video.mp4';
 
+const minute = (seconds) => {
+  const m = (seconds / 60).toFixed(0).padStart(2, '0');
+  const s = (seconds - parseInt(m) * 60).toFixed(0).padStart(2, '0');
+
+  return `${m}:${s}`;
+};
+
 const setSlot = (name, ele) => {
   document.querySelectorAll(`[slot=${name}]`).forEach(child => child.removeAttribute('slot'));
   ele.slot = name;
@@ -77,7 +84,7 @@ const startCapture = async () => {
     await handleRecord(stream);
     capture.srcObject = stream;
     capture.ontimeupdate = e => {
-      durationCaptureTxt.innerText = e.target.currentTime.toFixed(0).padStart(2, '0');
+      durationCaptureTxt.innerText = `${minute(e.target.currentTime)}`;
       dataTransfer.setData('text/plain', e.target.currentTime);
     };
   } catch {
@@ -89,7 +96,7 @@ const stopCapture = async () => {
   try {
     const duration = dataTransfer.getData('text/plain');
     timeProgress.max = Math.fround(parseFloat(duration));
-    timeTxt.innerText = `${timeProgress.value.toFixed(0).padStart(2, '0')}:${timeProgress.max.toFixed(0).padStart(2, '0')}`;
+    timeTxt.innerText = `${minute(timeProgress.value)}/〜${minute(timeProgress.max)}`;
   } catch {
     console.log('Cannot custom controls video');
   }
@@ -107,7 +114,7 @@ const playRecord = () => {
   record.ontimeupdate = e => {
     if (e.target.duration !== Infinity) timeProgress.max = e.target.duration;
     timeProgress.value = e.target.currentTime;
-    timeTxt.innerText = `${timeProgress.value.toFixed(0).padStart(2, '0')}/${timeProgress.max.toFixed(0).padStart(2, '0')}`;
+    timeTxt.innerText = `${minute(timeProgress.value)}/${minute(timeProgress.max)}`;
   };
 
   record.onended = () => {
