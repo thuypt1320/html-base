@@ -1,32 +1,48 @@
-html, body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
+legend {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
 }
 
-body {
-  height: 90%;
-  font: caption;
-  background-color: #F4F7F8;
+legend span {
+    display: inline-flex;
+    flex: 1;
+    border-bottom: 1px solid;
+    transform: translateY(-50%)
 }
 
-p {
-  margin: 1em 2em;
+.table {
+    display: flex;
+    width: fit-content;
+    margin: auto;
+    --border-style: solid;
+    --border-width: 1px
 }
 
-#content {
-  height: 90%;
-  margin: 2em 2em 0 2em;
-  border: .5em solid #DDE4E9;
-  transition: background-color .2s ease-out;
+.col {
+    border: var(--border-width, 1px) var(--border-style, solid);
+    border-right-width: 0;
 }
 
-#content[contenteditable=true] {
-  background-color: white;
-  transition: background-color .2s ease-in;
+.col:last-child {
+    border-right-width: var(--border-width, 1px);
 }
 
-[contenteditable]:focus {
-  outline: 0px solid transparent;
+.th, .td {
+    display: block;
+    padding: 8px;
+    margin: 0;
+    border-bottom: var(--border-width, 1px) var(--border-style, solid)
+}
+
+.th:last-child, .td:last-child {
+    border-bottom: none;
+}
+
+.th {
+    font-weight: bold;
+}
+
+.td:hover, .td:has(input:checked) {
+    background: rgba(128, 128, 128, 0.3)
 }

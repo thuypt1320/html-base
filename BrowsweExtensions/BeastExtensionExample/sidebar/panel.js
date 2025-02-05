@@ -1,57 +1,95 @@
-let myWindowId;
-const contentBox = document.querySelector("#content");
+const form = document.querySelector('form');
+const reset = document.querySelector('button[type="reset"]');
+const style = `
+    [data-text-color="blue"] p {color: blue;} 
+    [data-text-color="yellow"] p {color: yellow;} 
+    [data-text-color="red"] p {color: red;} 
+    [data-text-color="green"] p {color: green;} 
+  `;
+const hidePage = `body > :not(.beastify-image) {
+                    display: none;
+                  }`;
 
-/*
-Make the content box editable as soon as the user mouses over the sidebar.
-*/
-window.addEventListener("mouseover", () => {
-  contentBox.setAttribute("contenteditable", true);
-});
-
-/*
-When the user mouses out, save the current contents of the box.
-*/
-window.addEventListener("mouseout", () => {
-  contentBox.setAttribute("contenteditable", false);
-  browser.tabs.query({windowId: myWindowId, active: true}).then((tabs) => {
-    let contentToStore = {};
-    contentToStore[tabs[0].url] = contentBox.textContent;
-    browser.storage.local.set(contentToStore);
+const onReset = (tabId) => {
+  chrome.scripting.removeCSS({
+    css: hidePage,
+    target: { tabId: tabId }
   });
-});
 
-/*
-Update the sidebar's content.
+  chrome.scripting.removeCSS({
+    css: style,
+    target: { tabId: tabId }
+  });
+};
 
-1) Get the active tab in this sidebar's window.
-2) Get its stored content.
-3) Put it in the content box.
-*/
-function updateContent() {
-  browser.tabs.query({windowId: myWindowId, active: true})
-    .then((tabs) => {
-      return browser.storage.local.get(tabs[0].url);
-    })
-    .then((storedInfo) => {
-      contentBox.textContent = storedInfo[Object.keys(storedInfo)[0]];
+const executeScript = (tabId) => {
+  chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['content_scripts/beastify.js']
+  });
+  chrome.scripting.executeScript({
+    target: { tabId },
+    func: function () {
+      chrome.runtime.onMessage.addListener(message => {
+        if (!message.color) {
+          document.body.removeAttribute('data-text-color');
+        } else {
+          document.body.setAttribute('data-text-color', message.color);
+        }
+      });
+    },
+  });
+};
+
+const onChange = (tabId) => {
+  const values = Object.fromEntries(new FormData(form).entries());
+  chrome.tabs.sendMessage(tabId, values);
+
+  if (!values?.color) {
+    chrome.scripting.removeCSS({
+      css: style,
+      target: { tabId }
     });
-}
+  }
+  if (!values?.beast) {
+    onReset(tabId);
+  } else {
+    chrome.scripting.insertCSS({
+      css: hidePage,
+      target: { tabId }
+    }).then(() => {
+      chrome.tabs.sendMessage(tabId, {
+        command: 'beastify',
+        beastURL: chrome.runtime.getURL(`beasts/${values?.beast}.jpg`)
+      });
+    });
+  }
 
-/*
-Update content when a new tab becomes active.
-*/
-browser.tabs.onActivated.addListener(updateContent);
+  chrome.scripting.insertCSS({
+    css: style,
+    target: { tabId }
+  });
+  executeScript(tabId);
+};
 
-/*
-Update content when a new page is loaded into a tab.
-*/
-browser.tabs.onUpdated.addListener(updateContent);
+const handleScript = () => {
+  try {
+    chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    }).then(([{ id: tabId }]) => {
+      executeScript(tabId);
+      reset.addEventListener('click', () => onReset(tabId));
+      form.addEventListener('change', () => onChange(tabId));
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
 
-/*
-When the sidebar loads, get the ID of its window,
-and update its content.
-*/
-browser.windows.getCurrent({populate: true}).then((windowInfo) => {
-  myWindowId = windowInfo.id;
-  updateContent();
+reset.addEventListener('click', () => {
+  form.reset();
+  form.dispatchEvent(new Event('change'));
 });
+
+handleScript();
