@@ -9,12 +9,15 @@
     "48": "icons/beasts-48.png"
   },
 
-  "permissions": ["activeTab", "tabs", "scripting"],
+  "permissions": ["activeTab", "tabs", "scripting", "contextMenus"],
 
   "action": {
     "default_icon": "icons/beasts-32.png",
     "default_title": "Beastify",
     "default_popup": "popup/choose_beast.html"
+  },
+  "background": {
+    "service_worker": "background/script.js"
   },
   "web_accessible_resources": [
     {
