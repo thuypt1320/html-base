@@ -14,7 +14,8 @@
   "action": {
     "default_icon": "icons/beasts-32.png",
     "default_title": "Beastify",
-    "default_popup": "popup/choose_beast.html"
+    "default_popup": "popup/choose_beast.html",
+    "default_panel": "sidebar/panel.html"
   },
   "background": {
     "service_worker": "background/script.js"
