@@ -9,7 +9,7 @@
     "48": "icons/beasts-48.png"
   },
 
-  "permissions": ["activeTab", "tabs", "scripting", "contextMenus"],
+  "permissions": ["activeTab", "tabs", "scripting", "contextMenus", "storage"],
 
   "action": {
     "default_icon": "icons/beasts-32.png",
@@ -26,5 +26,9 @@
       "extension_ids": ["*"],
       "matches": [ "*://*/*" ]
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
 }
