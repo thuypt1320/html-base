@@ -9,7 +9,7 @@
     "48": "icons/beasts-48.png"
   },
 
-  "permissions": ["activeTab", "tabs", "scripting", "contextMenus", "sidePanel"],
+  "permissions": ["activeTab", "tabs", "scripting", "contextMenus", "sidePanel", "notifications"],
   "host_permissions": ["https://*/*"],
   "action": {
     "default_icon": "icons/beasts-32.png",
