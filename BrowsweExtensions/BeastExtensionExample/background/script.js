@@ -70,13 +70,18 @@ chrome.omnibox.onInputEntered.addListener((text) => {
   const newURL = 'https://www.google.com/search?q=' + encodeURIComponent(text);
   chrome.tabs.create({ url: newURL });
 });
+
+// Handle command - show panel
 chrome.tabs.query({
   active: true,
   currentWindow: true
 }).then(([{ id: tabId }]) => {
+  let open = false;
   chrome.commands.onCommand.addListener(command => {
     if (command === 'show-panel') {
-      chrome.sidePanel.open({ tabId });
+      chrome.sidePanel.setOptions({ enabled: !open });
+      if (!open) chrome.sidePanel.open({ tabId });
+      open = !open;
     }
   });
 });

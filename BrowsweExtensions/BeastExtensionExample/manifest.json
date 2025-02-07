@@ -55,7 +55,7 @@
   "commands": {
     "show-panel": {
       "suggested_key": {
-        "default": "Ctrl+Shift+Y"
+        "default": "Ctrl+Shift+X"
       } ,
       "description": "Show Panel"
     }
