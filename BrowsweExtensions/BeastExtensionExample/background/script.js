@@ -54,9 +54,29 @@ chrome.runtime.onInstalled.addListener(() => {
       target: { tabId: tab.id }
     });
 
-    chrome.tabs.sendMessage(tab.id, { color: info.menuItemId })
-  })
-})
+    chrome.tabs.sendMessage(tab.id, { color: info.menuItemId });
+  });
+});
 
+chrome.omnibox.onInputStarted.addListener(function () {
+  console.log('💬 onInputStarted');
 
-
+  chrome.omnibox.setDefaultSuggestion({
+    description: 'Here is a default <match>suggestion</match>. <url>It\'s <match>url</match> here</url>'
+  });
+});
+chrome.omnibox.onInputEntered.addListener((text) => {
+  // Encode user input for special characters , / ? : @ & = + $ #
+  const newURL = 'https://www.google.com/search?q=' + encodeURIComponent(text);
+  chrome.tabs.create({ url: newURL });
+});
+chrome.tabs.query({
+  active: true,
+  currentWindow: true
+}).then(([{ id: tabId }]) => {
+  chrome.commands.onCommand.addListener(command => {
+    if (command === 'show-panel') {
+      chrome.sidePanel.open({ tabId });
+    }
+  });
+});

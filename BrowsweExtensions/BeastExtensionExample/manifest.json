@@ -2,15 +2,22 @@
   "manifest_version": 3,
   "name": "Beastify",
   "version": "1.0",
-
   "description": "Adds a browser action icon to the toolbar. Click the button to choose a beast. The active tab's body content is then replaced with a picture of the chosen beast. See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Examples#beastify",
   "homepage_url": "https://github.com/mdn/webextensions-examples/tree/main/beastify",
   "icons": {
     "48": "icons/beasts-48.png"
   },
-
-  "permissions": ["activeTab", "tabs", "scripting", "contextMenus", "sidePanel", "notifications"],
-  "host_permissions": ["https://*/*"],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "contextMenus",
+    "sidePanel",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ],
   "action": {
     "default_icon": "icons/beasts-32.png",
     "default_title": "Beastify",
@@ -22,9 +29,17 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["beasts/frog.jpg", "beasts/turtle.jpg", "beasts/snake.jpg"],
-      "extension_ids": ["*"],
-      "matches": [ "*://*/*" ]
+      "resources": [
+        "beasts/frog.jpg",
+        "beasts/turtle.jpg",
+        "beasts/snake.jpg"
+      ],
+      "extension_ids": [
+        "*"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
     }
   ],
   "options_ui": {
@@ -33,5 +48,16 @@
   },
   "side_panel": {
     "default_path": "sidebar/panel.html"
+  },
+  "omnibox": {
+    "keyword": "bs"
+  },
+  "commands": {
+    "show-panel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      } ,
+      "description": "Show Panel"
+    }
   }
 }
