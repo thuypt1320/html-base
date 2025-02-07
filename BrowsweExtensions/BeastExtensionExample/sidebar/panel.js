@@ -10,17 +10,15 @@ const hidePage = `body > :not(.beastify-image) {
                     display: none;
                   }`;
 
-const onReset = (tabId) => {
-  chrome.scripting.removeCSS({
-    css: hidePage,
-    target: { tabId: tabId }
-  });
+const onResetBeast = tabId => chrome.scripting.removeCSS({
+  css: hidePage,
+  target: { tabId: tabId }
+}).then(() => chrome.tabs.sendMessage(tabId, { command: 'reset' }));
 
-  chrome.scripting.removeCSS({
-    css: style,
-    target: { tabId: tabId }
-  });
-};
+const onResetColor = tabId => chrome.scripting.removeCSS({
+  css: style,
+  target: { tabId: tabId }
+});
 
 const executeScript = (tabId) => {
   chrome.scripting.executeScript({
@@ -31,6 +29,7 @@ const executeScript = (tabId) => {
     target: { tabId },
     func: function () {
       chrome.runtime.onMessage.addListener(message => {
+        if (message.command !== 'change-color') return;
         if (!message.color) {
           document.body.removeAttribute('data-text-color');
         } else {
@@ -41,35 +40,31 @@ const executeScript = (tabId) => {
   });
 };
 
-const onChange = (tabId) => {
-  const values = Object.fromEntries(new FormData(form).entries());
-  chrome.tabs.sendMessage(tabId, values);
+const beasts = {
+  snake: chrome.runtime.getURL('beasts/snake.jpg'),
+  frog: chrome.runtime.getURL('beasts/frog.jpg'),
+  turtle: chrome.runtime.getURL('beasts/turtle.jpg'),
+};
 
-  if (!values?.color) {
-    chrome.scripting.removeCSS({
-      css: style,
-      target: { tabId }
+const onChangeBeast = (tabId, values) => {
+  onResetBeast(tabId);
+  values.beast && chrome.scripting.insertCSS({
+    css: hidePage,
+    target: { tabId }
+  }).then(() => {
+    chrome.tabs.sendMessage(tabId, {
+      command: 'beastify',
+      beastURL: beasts[values.beast]
     });
-  }
-  if (!values?.beast) {
-    onReset(tabId);
-  } else {
-    chrome.scripting.insertCSS({
-      css: hidePage,
-      target: { tabId }
-    }).then(() => {
-      chrome.tabs.sendMessage(tabId, {
-        command: 'beastify',
-        beastURL: chrome.runtime.getURL(`beasts/${values?.beast}.jpg`)
-      });
-    });
-  }
+  });
+};
 
-  chrome.scripting.insertCSS({
+const onChangeColor = (tabId, values) => {
+  chrome.tabs.sendMessage(tabId, { command: 'change-color', ...values });
+  values.color && chrome.scripting.insertCSS({
     css: style,
     target: { tabId }
   });
-  executeScript(tabId);
 };
 
 const handleScript = () => {
@@ -79,8 +74,15 @@ const handleScript = () => {
       currentWindow: true
     }).then(([{ id: tabId }]) => {
       executeScript(tabId);
-      reset.addEventListener('click', () => onReset(tabId));
-      form.addEventListener('change', () => onChange(tabId));
+      reset.addEventListener('click', () => {
+        onResetBeast(tabId);
+        onResetColor(tabId);
+      });
+      form.addEventListener('change', (e) => {
+        const values = Object.fromEntries(new FormData(form).entries());
+        if (e.target.name === 'color') onChangeColor(tabId, values);
+        if (e.target.name === 'beast') onChangeBeast(tabId, values);
+      });
     });
   } catch (e) {
     console.log(e);
