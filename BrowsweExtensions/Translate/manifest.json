@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Translate",
+  "version": "1.0",
+  "description": "Translate",
+  "icons": {
+    "48": "icons/beasts-32.png"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_icon": "icons/beasts-32.png",
+    "default_title": "Translate",
+    "default_panel": "sidebar/panel.html"
+  },
+  "side_panel": {
+    "default_path": "sidebar/panel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "beasts/frog.jpg",
+        "beasts/turtle.jpg",
+        "beasts/snake.jpg"
+      ],
+      "extension_ids": [
+        "*"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
+  ],
+  "omnibox": {
+    "keyword": "tr"
+  },
+  "commands": {
+    "show-panel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+X"
+      },
+      "description": "Show Panel"
+    }
+  }
+}

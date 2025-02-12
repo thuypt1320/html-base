@@ -1,0 +1,27 @@
+legend {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+legend .hr {
+    display: inline-flex;
+    flex: 1;
+    border-bottom: 1px solid;
+    transform: translateY(-50%)
+}
+
+textarea {
+    width: 100%;
+    white-space: pre-wrap;
+}
+
+#controls {
+    display: inline-flex;
+    gap: 2px;
+}
+
+ul {
+    background: lightblue;
+}
+

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+	      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+</head>
+<body>
+<div id="host" data-row="4" data-column="5">
+	<template shadowrootmode="open">
+		<table>
+			<thead></thead>
+			<tbody></tbody>
+		</table>
+		<style>
+			table {border-collapse: collapse;}
+			td, th {
+				border: 1px solid;
+				padding: 4px;
+
+			}
+			tr:hover {
+				background: lightgray;
+			}
+			slot {
+				aspect-ratio: 1;
+				display: inline-block;
+				min-width: 2ch;
+			}
+		</style>
+		<script>
+			const host = document.getElementById('host')
+			const shadowRoot = host.shadowRoot;
+			const rows = Number(host.getAttribute('data-row'))
+			const columns = Number(host.getAttribute('data-column'))
+
+			const createRow = (rowIdx, isHead) => {
+				const tr = document.createElement('tr');
+				Array(columns).fill(null).forEach((_, idx) => {
+					const td = document.createElement(isHead?'th':'td');
+					const slot = document.createElement('slot');
+					slot.name = isHead?`head-${idx + 1}` :`col-${(idx + 1)}${rowIdx}`;
+					td.appendChild(slot);
+					tr.appendChild(td);
+				});
+				return tr;
+			};
+			shadowRoot.querySelector('thead').append(createRow(0, true));
+			shadowRoot.querySelector('tbody').append(...Array(rows).fill(null).map((_, idx) => createRow(idx + 1)));
+		</script>
+	</template>
+
+	<span slot="head-1">h1</span>
+	<span slot="head-2">h2</span>
+	<span slot="head-3">h3</span>
+
+	<span slot="col-11">11</span>
+	<span slot="col-21">21</span>
+	<span slot="col-31">31</span>
+
+	<span slot="col-12">12</span>
+	<span slot="col-22">22</span>
+	<span slot="col-32">32</span>
+
+	<span slot="col-13">13</span>
+	<span slot="col-23">23</span>
+	<span slot="col-33">33</span>
+
+	<span slot="col-14">14</span>
+	<span slot="col-24">24</span>
+	<span slot="col-34">34</span>
+</div>
+
+</body>
+</html>
