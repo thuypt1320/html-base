@@ -80,7 +80,7 @@ chrome.tabs.query({
   chrome.commands.onCommand.addListener(command => {
     if (command === 'show-panel') {
       chrome.sidePanel.setOptions({ enabled: !open });
-      if (!open) chrome.sidePanel.open({ tabId });
+      chrome.sidePanel.open({ tabId });
       open = !open;
     }
   });
