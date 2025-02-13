@@ -15,18 +15,17 @@ const createLink = (text, url = '') => {
 
   const li = document.createElement('li');
   li.classList.add('link');
-  const a = document.createElement('a');
+  const p = document.createElement('p');
+  const span = document.createElement('span');
   const button = document.createElement('button');
 
-  a.target = '_blank';
-  a.href = createUrl(text);
-  a.title = text;
-
-  a.textContent = text;
-
+  li.setAttribute('data-href', createUrl(text));
+  span.title = text;
+  span.textContent = text;
   button.textContent = '✕';
 
-  li.append(a, button);
+  p.append(span, button);
+  li.append(p);
   list.appendChild(li);
   button.onclick = () => li.remove();
 };

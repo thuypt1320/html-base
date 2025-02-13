@@ -23,5 +23,32 @@ textarea {
 
 ul {
     background: lightblue;
+    padding-inline-end: 10px;
+    padding-inline-start: 30px;
 }
 
+.link::marker {
+}
+
+.link p{
+    display: inline-flex;
+    width: 100%;
+}
+
+.link span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    cursor: pointer;
+    height: fit-content;
+}
+
+#list {
+    min-height: 40px;
+    background: rgba(211, 211, 211, 0.2);
+    border-color: rgba(211, 211, 211, 0.2);
+    white-space: pre-wrap;
+}

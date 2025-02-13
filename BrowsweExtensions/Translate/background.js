@@ -1,10 +1,10 @@
 const sidePanelToggle = (tabId) => {
-  let open
+  let open;
   chrome.commands.onCommand.addListener(async command => {
     if (command !== 'show-panel') return;
-    chrome.sidePanel.setOptions({enabled: !open})
-    chrome.sidePanel.open({tabId})
-    open = !open
+    chrome.sidePanel.setOptions({ enabled: !open });
+    chrome.sidePanel.open({ tabId });
+    open = !open;
   });
 };
 
