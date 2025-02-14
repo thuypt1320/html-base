@@ -1,8 +1,4 @@
 const DOMAIN = `https://translate.google.com`;
-
-const getValues = () => Object.fromEntries(new FormData(form).entries());
-const getItem = (target) => [...list.querySelectorAll('li')].find(li => li.contains(target));
-
 const createUrl = text => DOMAIN + `?sl=auto&tl=vi&text=${encodeURIComponent(text)}&op=translate`;
 
 const checkExist = (text) => [...list.querySelectorAll('li span')].find(item => item.textContent === text);
@@ -23,7 +19,8 @@ const createLink = (text) => {
 
   p.append(span, button);
   li.append(p);
-  list.appendChild(li);
+  // Add new item at the top of list
+  list.insertBefore(li, list.querySelector('li:first-child'));
   button.onclick = () => li.remove();
 
   return li;
@@ -48,7 +45,6 @@ const queryActive = async cb => chrome.tabs.query({
   active: true,
   currentWindow: true
 }).then(cb);
-const tabSendMessage = async message => queryActive(([{ id }]) => chrome.tabs.sendMessage(id, message));
 const onMessage = cb => chrome.runtime.onMessage.addListener(cb);
 const executeScript = async cb => queryActive(([{ id }]) => chrome.scripting.executeScript({
   target: { tabId: id },
@@ -100,7 +96,7 @@ const handleTextList = () => {
   const observer = new MutationObserver(() => {
     textList.textContent = '';
     list.querySelectorAll('li span').forEach((span) => {
-      textList.textContent = [textList.textContent, '• ' + span.textContent].join('\n');
+      textList.textContent = [textList.textContent, '• ' + span.textContent].join('\n').trim();
       transAll.href = textList.textContent;
     });
   });
@@ -112,6 +108,7 @@ const handleTextList = () => {
 };
 
 transAll.addEventListener('click', () => navigate(createUrl(textList.textContent)));
+submit.addEventListener('click', () => navigate(createUrl(textarea.value)));
 
 handleTextList();
 handleSelectionText().then();

@@ -1,6 +1,7 @@
 const textarea = document.querySelector('textarea[name=text]');
 const reset = document.querySelector('#controls [type=reset]');
 const transAll = document.querySelector('#controls [type=button]');
+const submit = document.querySelector('#controls [type=submit]');
 const form = document.querySelector('form');
 const list = document.querySelector('ul');
 const textList = document.querySelector('#list');
@@ -20,4 +21,3 @@ const onReset = () => {
 
 textarea.addEventListener('input', onChange);
 reset.addEventListener('click', onReset);
-
