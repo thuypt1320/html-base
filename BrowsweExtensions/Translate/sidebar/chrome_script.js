@@ -73,7 +73,8 @@ const handleSelectionText = async () => {
 
   executeScript(() => {
     const runtimeSendMessage = async message => chrome.runtime.sendMessage(message);
-    document.addEventListener('selectionchange', () => {
+    document.addEventListener('selectionchange', (e) => {
+      if (['TEXTAREA', 'INPUT'].includes(e.target.tagName)) return;
       const selectionText = document.getSelection().toString();
       if (!selectionText.trim()) {
         runtimeSendMessage({ command: 'create-link' });
