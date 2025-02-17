@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Speech",
+  "version": "1.0",
+  "description": "Text to speech",
+  "icons": {
+    "48": "icons/speaker.png"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_icon": "icons/speaker.png",
+    "default_title": "Speech"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidebar/panel.html"
+  },
+  "commands": {
+    "speak": {
+      "suggested_key": "Ctrl+Shift+U",
+      "description": "Speak Text"
+    },
+    "show-panel": {
+      "suggested_key": "Ctrl+Shift+X",
+      "description": "Show Panel"
+    }
+  }
+}

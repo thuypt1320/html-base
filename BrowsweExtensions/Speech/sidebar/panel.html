@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Speech</title>
+	<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<form>
+	<p id="controls">
+		<label>
+			<input type="search" hidden list="list" name="filter"/>
+			<select id="voices" name="list"></select>
+			<datalist id="list"></datalist>
+		</label>
+		<span>
+			<button id="play"></button>
+			<button type="reset">↺</button>
+		</span>
+	</p>
+	<textarea id="selection" name="selection"></textarea>
+</form>
+<script src="../chrome.js"></script>
+<script src="panel.js"></script>
+</body>
+</html>
