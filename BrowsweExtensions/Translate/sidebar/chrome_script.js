@@ -30,6 +30,7 @@ const textareaChange = (text) => {
 const handleClickLink = (target) => target.addEventListener('click', (e) => {
   if (e.target.tagName === 'BUTTON') return;
   navigate(target.href);
+  target.remove();
 });
 
 // Insert selection text from current tab to textarea of extension
@@ -74,10 +75,16 @@ const handleTextList = () => {
   });
 };
 
-transAll.addEventListener('click', () => navigate(createUrl(textList.textContent)));
-submit.addEventListener('click', () => navigate(createUrl(textarea.value)));
+transAll.addEventListener('click', () => {
+  navigate(createUrl(textList.textContent));
+  onReset();
+});
+submit.addEventListener('click', () => {
+  navigate(createUrl(textarea.value));
+  onReset();
+});
 
 handleTextList();
 handleSelectionText().then();
 onActivated(handleSelectionText);
-onUpdated(handleSelectionText());
+onUpdated(handleSelectionText);

@@ -30,5 +30,5 @@ const navigate = (to) => queryActive(([{
 }]) => {
   if (to === url) return;
   if (sameOrigin(to, url)) return chrome.tabs.update(id, { url: to });// ≅ window.location.replace(<url>)
-  window.open(to);
+  window.open(to, '', 'popup,width=700,height=500,left=500,top=500');
 });
